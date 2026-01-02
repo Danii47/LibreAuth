@@ -82,39 +82,34 @@ export function getTimeRemaining(): number {
 
 // Example OTP URL: 
 // otpauth://totp/Example:alice@google.com?secret=JBSWY3DPEHPK3PXP&issuer=Example
-export function extractOTPParams(otpAuthUrl: string): { secret: string; issuer?: string; accountName?: string } | null {
-  try {
-    const url = new URL(otpAuthUrl);
-    if (url.protocol !== "otpauth:") {
-      throw new Error("Invalid protocol");
-    }
-    const type = url.hostname;
-    if (type !== "totp" && type !== "hotp") {
-      throw new Error("Invalid OTP type");
-    }
-    const secret = url.searchParams.get("secret");
-    if (!secret) {
-      throw new Error("Missing secret");
-    }
-
-    const issuerParam = url.searchParams.get("issuer");
-    const label = decodeURIComponent(url.pathname.slice(1));
-    let issuerLabel: string | undefined;
-    let accountName: string | undefined;
-
-    if (label.includes(":")) {
-      const parts = label.split(":");
-      issuerLabel = parts[0];
-      accountName = parts.slice(1).join(":").trim();
-    } else {
-      accountName = label;
-    }
-
-    const issuer = issuerParam || issuerLabel;
-
-    return { secret, issuer, accountName };
-  } catch (error) {
-    console.error("Error extracting OTP params:", error);
-    return null;
+export function extractOTPParams(otpAuthUrl: string): { secret: string; issuer?: string; accountName?: string } {
+  const url = new URL(otpAuthUrl);
+  if (url.protocol !== "otpauth:") {
+    throw new Error("Invalid protocol");
   }
+  const type = url.hostname;
+  if (type !== "totp" && type !== "hotp") {
+    throw new Error("Invalid OTP type");
+  }
+  const secret = url.searchParams.get("secret");
+  if (!secret) {
+    throw new Error("Missing secret");
+  }
+
+  const issuerParam = url.searchParams.get("issuer");
+  const label = decodeURIComponent(url.pathname.slice(1));
+  let issuerLabel: string | undefined;
+  let accountName: string | undefined;
+
+  if (label.includes(":")) {
+    const parts = label.split(":");
+    issuerLabel = parts[0];
+    accountName = parts.slice(1).join(":").trim();
+  } else {
+    accountName = label;
+  }
+
+  const issuer = issuerParam || issuerLabel;
+
+  return { secret, issuer, accountName };
 }
