@@ -1,7 +1,7 @@
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Modal, useColorScheme, StatusBar, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, useColorScheme, StatusBar } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useState, useCallback } from 'react';
-import { Plus, QrCode, Keyboard, Trash2, FolderOpen, X, FolderPlus, Folder as FolderIcon, ArrowRight } from 'lucide-react-native';
+import { Plus, Trash2, FolderOpen, X } from 'lucide-react-native';
 import { TotpCard } from '../../components/TotpCard';
 import { FolderCard } from '../../components/FolderCard';
 import { loadAuthData, saveAuthData } from '../../storage/secureStore';
@@ -9,6 +9,8 @@ import { Account, Folder } from '../../types';
 import { TEXTS } from '../../constants/Languages';
 import { getColors } from '../../constants/Styles';
 import { DeleteModal } from '@/components/DeleteModal';
+import { AddOptionsModal } from '@/components/AddOptionsModal';
+import { MoveToFolderModal } from '@/components/MoveToFolderModal';
 
 type ListItem = Account | Folder;
 
@@ -47,7 +49,7 @@ export default function HomeScreen() {
     return !('secret' in item);
   };
 
-  const hasFolderSelected = selectedIds.some(id => folders.some(f => f.id === id));
+  const hasFolderSelected = selectedIds.some(id => folders.some(folder => folder.id === id));
 
   const itemsToDisplay: ListItem[] = [
     ...folders,
@@ -121,7 +123,7 @@ export default function HomeScreen() {
     setMoveModalVisible(true);
   };
 
-  const performBatchMove = async (targetFolderId: string) => {
+  const performBatchMove = async (targetFolderId: string | undefined) => {
     const data = await loadAuthData();
 
     data.accounts = data.accounts.map(acc => {
@@ -134,6 +136,19 @@ export default function HomeScreen() {
     await saveAuthData(data);
     await loadData();
     exitSelectionMode();
+  };
+
+  const handleScanQR = () => {
+    setAddModalVisible(false);
+    router.push('/scan-qr');
+  };
+  const handleManualEntry = () => {
+    setAddModalVisible(false);
+    router.push('/add-account');
+  };
+  const handleCreateFolder = () => {
+    setAddModalVisible(false);
+    router.push('/add-folder');
   };
 
   const renderHeader = () => {
@@ -215,91 +230,25 @@ export default function HomeScreen() {
       />
 
       {/* MODAL 1: ADD */}
-      {!selectionMode && (
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={addModalVisible}
-          onRequestClose={() => setAddModalVisible(false)}
-        >
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setAddModalVisible(false)}
-          >
-            <View style={[styles.modalContent, { backgroundColor: colors.modalBg || 'white' }]}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>{TEXTS.addAccount}</Text>
-
-              <TouchableOpacity style={styles.modalOption} onPress={() => {
-                setAddModalVisible(false);
-                router.push('/scan-qr');
-              }}>
-                <QrCode size={24} color={colors.text} style={{ marginRight: 15 }} />
-                <Text style={[styles.optionText, { color: colors.text }]}>{TEXTS.scanQR}</Text>
-              </TouchableOpacity>
-
-              <View style={{ height: 1, backgroundColor: colors.headerBorder || '#eee', marginVertical: 5 }} />
-
-              <TouchableOpacity style={styles.modalOption} onPress={() => { setAddModalVisible(false); router.push('/add-account'); }}>
-                <Keyboard size={24} color={colors.text} style={{ marginRight: 15 }} />
-                <Text style={[styles.optionText, { color: colors.text }]}>{TEXTS.manualEntry}</Text>
-              </TouchableOpacity>
-
-              <View style={{ height: 1, backgroundColor: colors.headerBorder || '#eee', marginVertical: 5 }} />
-
-              <TouchableOpacity style={styles.modalOption} onPress={() => { setAddModalVisible(false); router.push('/add-folder'); }}>
-                <FolderPlus size={24} color={colors.text} style={{ marginRight: 15 }} />
-                <Text style={[styles.optionText, { color: colors.text }]}>{TEXTS.createFolder}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={[styles.cancelButton]} onPress={() => setAddModalVisible(false)}>
-                <Text style={{ color: colors.danger, fontWeight: 'bold', fontSize: 16 }}>{TEXTS.cancel}</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </Modal>
-      )}
+      <AddOptionsModal
+        visible={addModalVisible}
+        onClose={() => setAddModalVisible(false)}
+        onScanQR={handleScanQR}
+        onManualEntry={handleManualEntry}
+        onCreateFolder={handleCreateFolder}
+        showCreateFolder={true} // EN HOME SI MOSTRAMOS CARPETA
+        colors={colors}
+      />
 
       {/* MODAL 2: MOVE TO FOLDER */}
-      <Modal
-        animationType="slide"
-        transparent={true}
+      <MoveToFolderModal
         visible={moveModalVisible}
-        onRequestClose={() => setMoveModalVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setMoveModalVisible(false)}
-        >
-          <View style={[styles.modalContent, { backgroundColor: colors.modalBg || 'white', maxHeight: '60%' }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Mover a carpeta</Text>
-            <Text style={{ color: colors.subtext, textAlign: 'center', marginBottom: 15 }}>
-              Selecciona el destino para {selectedIds.length} cuenta(s)
-            </Text>
-
-            <ScrollView>
-              {folders.map((folder) => (
-                <TouchableOpacity
-                  key={folder.id}
-                  style={[styles.folderItem, { borderBottomColor: colors.headerBorder || '#eee' }]}
-                  onPress={() => performBatchMove(folder.id)}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <FolderIcon size={20} color={folder.color || colors.text} style={{ marginRight: 12 }} />
-                    <Text style={[styles.optionText, { color: colors.text, fontSize: 16 }]}>{folder.name}</Text>
-                  </View>
-                  <ArrowRight size={18} color={colors.subtext} />
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            <TouchableOpacity style={[styles.cancelButton, { marginTop: 10 }]} onPress={() => setMoveModalVisible(false)}>
-              <Text style={{ color: colors.danger, fontWeight: 'bold', fontSize: 16 }}>{TEXTS.cancel}</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        onClose={() => setMoveModalVisible(false)}
+        colors={colors}
+        folders={folders}
+        onMoveToFolder={performBatchMove}
+        count={selectedIds.length}
+      />
 
       {/* MODAL 3: DELETE */}
       <DeleteModal
@@ -322,18 +271,4 @@ const styles = StyleSheet.create({
   emptyState: { alignItems: 'center', marginTop: 100, opacity: 0.8 },
   emptyText: { fontSize: 18, fontWeight: 'bold' },
   emptySubtext: { fontSize: 14, marginTop: 5 },
-
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContent: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },
-  modalOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16 },
-  optionText: { fontSize: 18 },
-  cancelButton: { marginTop: 20, padding: 15, borderRadius: 12, alignItems: 'center', backgroundColor: "#202122" },
-  folderItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    borderBottomWidth: 1
-  },
 });
