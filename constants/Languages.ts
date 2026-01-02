@@ -6,7 +6,14 @@ const langCode = locale ? locale.languageCode : "en";
 const ALL_TEXTS: { [key: string]: { [key: string]: string } } = {
   en: {
     // English
+    invalidCode: "Invalid code",
+    invalidCodeMsg:
+      "The scanned QR code does not appear to be a valid authentication code.",
+    ok: "OK",
+    grantPermission: "Grant Permission",
+    cameraAccessMsg: "We need camera access to scan the QR code.",
     scanQR: "Scan QR",
+    scanQR2: "Scan the QR code",
     manualEntry: "Manual Entry",
     unknownIssuer: "Unknown",
     addAccount: "Add Account",
@@ -55,7 +62,14 @@ const ALL_TEXTS: { [key: string]: { [key: string]: string } } = {
   },
   es: {
     // Spanish
+    invalidCode: "Código no válido",
+    invalidCodeMsg:
+      "El código QR escaneado no parece ser un código de autenticación válido.",
+    ok: "OK",
+    grantPermission: "Conceder Permiso",
+    cameraAccessMsg: "Necesitamos acceso a la cámara para escanear el código QR.",
     scanQR: "Escanear QR",
+    scanQR2: "Escanear el código QR",
     manualEntry: "Entrada Manual",
     unknownIssuer: "Desconocido",
     addAccount: "Añadir Cuenta",
