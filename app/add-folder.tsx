@@ -11,10 +11,9 @@ import {
   useColorScheme,
   View
 } from 'react-native';
-// Asegúrate de que las rutas a tus constantes sean correctas
 import { ACCOUNT_COLORS } from '../constants/Colors';
-import { TEXTS } from '../constants/Languages'; // O theme.ts si lo unificaste
-import { getColors } from '../constants/Styles'; // O theme.ts
+import { TEXTS } from '../constants/Languages';
+import { getColors } from '../constants/Styles';
 import { loadAuthData, saveAuthData } from '../storage/secureStore';
 import { Folder } from '../types';
 import { AVAILABLE_ICONS } from '../constants/Icons';
@@ -33,7 +32,7 @@ export default function AddFolderScreen() {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert(TEXTS.errorTitle || 'Error', 'El nombre de la carpeta es obligatorio.');
+      Alert.alert(TEXTS.errorTitle, TEXTS.errorMissingName);
       return;
     }
 
