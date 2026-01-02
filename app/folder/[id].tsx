@@ -1,13 +1,15 @@
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Modal, useColorScheme, StatusBar, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, useColorScheme, StatusBar } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useState, useCallback } from 'react';
-import { Plus, QrCode, Keyboard, Trash2, ArrowLeft, X, FolderOpen, Folder as FolderIcon, ArrowRight, Home } from 'lucide-react-native';
+import { Plus, Trash2, ArrowLeft, X, FolderOpen } from 'lucide-react-native';
 import { TotpCard } from '../../components/TotpCard';
 import { loadAuthData, saveAuthData } from '../../storage/secureStore';
 import { Account, Folder } from '../../types';
 import { TEXTS } from '../../constants/Languages';
 import { getColors } from '../../constants/Styles';
 import { DeleteModal } from '@/components/DeleteModal';
+import { AddOptionsModal } from '@/components/AddOptionsModal';
+import { MoveToFolderModal } from '@/components/MoveToFolderModal';
 
 export default function FolderScreen() {
   const router = useRouter();
@@ -27,14 +29,7 @@ export default function FolderScreen() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const selectionMode = selectedIds.length > 0;
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-      setSelectedIds([]);
-    }, [id])
-  );
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     const data = await loadAuthData();
 
@@ -45,9 +40,15 @@ export default function FolderScreen() {
     setAccounts(folderAccounts);
 
     setLoading(false);
-  };
+  }, [id]);
 
-  // --- SELECTION MANAGEMENT ---
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+      setSelectedIds([]);
+    }, [loadData])
+  );
+
   const handleAccountPress = (account: Account) => {
     if (selectionMode) {
       toggleSelection(account.id);
@@ -109,7 +110,6 @@ export default function FolderScreen() {
     exitSelectionMode();
   };
 
-  // --- HEADER ---
   const renderHeader = () => {
     if (selectionMode) {
       return (
@@ -157,6 +157,10 @@ export default function FolderScreen() {
     );
   };
 
+  const handleScanQR = () => {
+    setAddModalVisible(false);
+    router.push('/scan-qr');
+  };
   const handleManualEntry = () => {
     setAddModalVisible(false);
     router.push({ pathname: '/add-account', params: { initialFolderId: id } });
@@ -196,92 +200,23 @@ export default function FolderScreen() {
       />
 
       {/* MODAL 1: ADD ACCOUNT */}
-      {!selectionMode && (
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={addModalVisible}
-          onRequestClose={() => setAddModalVisible(false)}
-        >
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setAddModalVisible(false)}
-          >
-            <View style={[styles.modalContent, { backgroundColor: colors.modalBg }]}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>{TEXTS.addAccount}</Text>
-
-              <TouchableOpacity style={styles.modalOption} onPress={() => {
-                setAddModalVisible(false);
-                router.push('/scan-qr');
-              }}>
-                <QrCode size={24} color={colors.text} style={{ marginRight: 15 }} />
-                <Text style={[styles.optionText, { color: colors.text }]}>{TEXTS.scanQR}</Text>
-              </TouchableOpacity>
-
-              <View style={{ height: 1, backgroundColor: colors.headerBorder, marginVertical: 5 }} />
-
-              <TouchableOpacity style={styles.modalOption} onPress={handleManualEntry}>
-                <Keyboard size={24} color={colors.text} style={{ marginRight: 15 }} />
-                <Text style={[styles.optionText, { color: colors.text }]}>{TEXTS.manualEntry}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={[styles.cancelButton]} onPress={() => setAddModalVisible(false)}>
-                <Text style={{ color: colors.danger, fontWeight: 'bold', fontSize: 16 }}>{TEXTS.cancel}</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </Modal>
-      )}
+      <AddOptionsModal
+        visible={addModalVisible}
+        onClose={() => setAddModalVisible(false)}
+        onScanQR={handleScanQR}
+        onManualEntry={handleManualEntry}
+        colors={colors}
+      />
 
       {/* MODAL 2: MOVE ACCOUNTS */}
-      <Modal
-        animationType="slide"
-        transparent={true}
+      <MoveToFolderModal
         visible={moveModalVisible}
-        onRequestClose={() => setMoveModalVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setMoveModalVisible(false)}
-        >
-          <View style={[styles.modalContent, { backgroundColor: colors.modalBg, maxHeight: '60%' }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>{TEXTS.moveAccounts}</Text>
-
-            <ScrollView>
-              <TouchableOpacity
-                style={[styles.folderItem, { borderBottomColor: colors.headerBorder }]}
-                onPress={() => performBatchMove(undefined)}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Home size={20} color={colors.text} style={{ marginRight: 12 }} />
-                  <Text style={[styles.optionText, { color: colors.text, fontSize: 16 }]}>{TEXTS.principalFolder}</Text>
-                </View>
-                <ArrowRight size={18} color={colors.subtext} />
-              </TouchableOpacity>
-
-              {availableFolders.map((f) => (
-                <TouchableOpacity
-                  key={f.id}
-                  style={[styles.folderItem, { borderBottomColor: colors.headerBorder }]}
-                  onPress={() => performBatchMove(f.id)}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <FolderIcon size={20} color={f.color || colors.text} style={{ marginRight: 12 }} />
-                    <Text style={[styles.optionText, { color: colors.text, fontSize: 16 }]}>{f.name}</Text>
-                  </View>
-                  <ArrowRight size={18} color={colors.subtext} />
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            <TouchableOpacity style={[styles.cancelButton, { marginTop: 10 }]} onPress={() => setMoveModalVisible(false)}>
-              <Text style={{ color: colors.danger, fontWeight: 'bold', fontSize: 16 }}>{TEXTS.cancel}</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        onClose={() => setMoveModalVisible(false)}
+        colors={colors}
+        folders={availableFolders}
+        onMoveToFolder={performBatchMove}
+        count={selectedIds.length}
+      />
 
       {/* MODAL 3: DELETE ACCOUNTS */}
       <DeleteModal
@@ -304,17 +239,4 @@ const styles = StyleSheet.create({
   emptyState: { alignItems: 'center', marginTop: 100, opacity: 0.8 },
   emptyText: { fontSize: 18, fontWeight: 'bold' },
   emptySubtext: { fontSize: 14, marginTop: 5 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContent: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-  modalOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16 },
-  optionText: { fontSize: 18 },
-  cancelButton: { marginTop: 20, padding: 15, borderRadius: 12, alignItems: 'center', backgroundColor: "#202122" },
-  folderItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    borderBottomWidth: 1
-  }
 });
