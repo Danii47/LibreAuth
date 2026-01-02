@@ -3,7 +3,8 @@ import {
   Terminal, Code2, Cloud, Server, Wifi, Database,
   Gamepad2, Headphones, Camera, Music, Video, MessageCircle, Heart,
   ShoppingCart, CreditCard, Wallet, Landmark, Tag,
-  ShieldCheck, Lock, Globe, Plane, Car, Gift
+  ShieldCheck, Lock, Globe, Plane, Car, Gift,
+  Folder
 } from 'lucide-react-native';
 
 // Mapeo: Nombre interno -> Componente
@@ -11,10 +12,11 @@ export const ICON_MAP: { [key: string]: any } = {
   default: Key,
   personal: User,
   home: Home,
-  work: Briefcase,
+  folder: Folder,
   email: Mail,
-
+  
   dev: Terminal,
+  work: Briefcase,
   code: Code2,
   cloud: Cloud,
   server: Server,
