@@ -49,6 +49,9 @@ const ALL_TEXTS: { [key: string]: { [key: string]: string } } = {
     folderColorLabel: "Color",
     principalFolder: "No folder",
     noFoldersCreated: "You have no folders created. Please create one first.",
+    emptyFolder: "This folder is empty.",
+    errorMissingName: "Folder name is required.",
+    pressToStart: "Tap + to get started",
   },
   es: {
     // Spanish
@@ -95,6 +98,9 @@ const ALL_TEXTS: { [key: string]: { [key: string]: string } } = {
     folderColorLabel: "Color",
     principalFolder: "Sin carpeta",
     noFoldersCreated: "No tienes carpetas creadas. Crea una primero.",
+    emptyFolder: "Esta carpeta está vacía.",
+    errorMissingName: "El nombre de la carpeta es obligatorio.",
+    pressToStart: "Pulsa + para empezar",
   },
   fr: {
     // French
