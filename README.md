@@ -36,7 +36,7 @@ Este proyecto está construido con las mejores herramientas del ecosistema React
 
 1.  **Clonar el repositorio:**
     ```bash
-    git clone [https://github.com/Danii47/LibreAuth.git](https://github.com/Danii47/LibreAuth.git)
+    git clone https://github.com/Danii47/LibreAuth.git
     cd LibreAuth
     ```
 
@@ -68,7 +68,7 @@ Este proyecto está construido con las mejores herramientas del ecosistema React
 ## ⚠️ Nota sobre Seguridad y Backups
 
 Al ser una aplicación **100% offline**, no existe una "nube" donde se guarden tus contraseñas.
-* Si borras la aplicación o pierdes el dispositivo, **perderás tus códigos**.
+* Si borras la aplicación o pierdes el dispositivo, **perderás tus códigos** a menos que hayas exportado previamente tus claves.
 * Se recomienda mantener una copia de seguridad de las claves secretas ("seeds") o configurar métodos de recuperación alternativos en tus servicios.
 
 ## 📄 Licencia
