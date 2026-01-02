@@ -1,7 +1,7 @@
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Alert, Modal, useColorScheme, StatusBar } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Modal, useColorScheme, StatusBar, ScrollView } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useState, useCallback } from 'react';
-import { Plus, QrCode, Keyboard, Trash2, FolderOpen, X, FolderPlus } from 'lucide-react-native';
+import { Plus, QrCode, Keyboard, Trash2, FolderOpen, X, FolderPlus, Folder as FolderIcon, ArrowRight, AlertTriangle } from 'lucide-react-native';
 import { TotpCard } from '../../components/TotpCard';
 import { FolderCard } from '../../components/FolderCard';
 import { loadAuthData, saveAuthData } from '../../storage/secureStore';
@@ -9,7 +9,6 @@ import { Account, Folder } from '../../types';
 import { TEXTS } from '../../constants/Languages';
 import { getColors } from '../../constants/Styles';
 
-// Tipo unión para la lista mezclada
 type ListItem = Account | Folder;
 
 export default function HomeScreen() {
@@ -17,13 +16,14 @@ export default function HomeScreen() {
   const scheme = useColorScheme();
   const colors = getColors(scheme);
 
-  // Estados separados para carpetas y cuentas
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modalVisible, setModalVisible] = useState(false);
 
-  // Selección
+  const [addModalVisible, setAddModalVisible] = useState(false);
+  const [moveModalVisible, setMoveModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const selectionMode = selectedIds.length > 0;
 
@@ -46,12 +46,13 @@ export default function HomeScreen() {
     return !('secret' in item);
   };
 
+  const hasFolderSelected = selectedIds.some(id => folders.some(f => f.id === id));
+
   const itemsToDisplay: ListItem[] = [
     ...folders,
     ...accounts.filter(acc => !acc.folderId)
   ].sort((a, b) => b.createdAt - a.createdAt);
 
-  // --- GESTIÓN DE CLICK ---
   const handleItemPress = (item: ListItem) => {
     if (selectionMode) {
       toggleSelection(item.id);
@@ -81,22 +82,18 @@ export default function HomeScreen() {
     }
   };
 
-  const exitSelectionMode = () => setSelectedIds([]);
+  const exitSelectionMode = () => {
+    setSelectedIds([]);
+    setMoveModalVisible(false);
+    setDeleteModalVisible(false);
+  };
 
   const handleDeleteSelected = () => {
-    Alert.alert(
-      TEXTS.delete,
-      `${TEXTS.confirmDelete} ${selectedIds.length} ${TEXTS.confirmDelete2}`,
-      [
-        { text: TEXTS.cancel, style: "cancel" },
-        { text: TEXTS.delete, style: "destructive", onPress: performBatchDelete }
-      ]
-    );
+    setDeleteModalVisible(true);
   };
 
   const performBatchDelete = async () => {
     const data = await loadAuthData();
-
     const folderIdsToDelete = data.folders
       .filter(folder => selectedIds.includes(folder.id))
       .map(folder => folder.id);
@@ -104,24 +101,40 @@ export default function HomeScreen() {
     data.accounts = data.accounts.filter(account => {
       const isExplicitlySelected = selectedIds.includes(account.id);
       const isInDeletedFolder = account.folderId ? folderIdsToDelete.includes(account.folderId) : false;
-
       return !isExplicitlySelected && !isInDeletedFolder;
     });
 
     data.folders = data.folders.filter(f => !selectedIds.includes(f.id));
 
     await saveAuthData(data);
-
     setAccounts(data.accounts);
     setFolders(data.folders || []);
     exitSelectionMode();
   };
 
   const handleMoveSelected = () => {
-    Alert.alert("Info", "Mover elementos próximamente");
+    if (folders.length === 0) {
+      alert(TEXTS.noFoldersCreated);
+      return;
+    }
+    setMoveModalVisible(true);
   };
 
-  // --- RENDERIZADO ---
+  const performBatchMove = async (targetFolderId: string) => {
+    const data = await loadAuthData();
+
+    data.accounts = data.accounts.map(acc => {
+      if (selectedIds.includes(acc.id)) {
+        return { ...acc, folderId: targetFolderId };
+      }
+      return acc;
+    });
+
+    await saveAuthData(data);
+    await loadData();
+    exitSelectionMode();
+  };
+
   const renderHeader = () => {
     if (selectionMode) {
       return (
@@ -133,9 +146,11 @@ export default function HomeScreen() {
             {selectedIds.length} {TEXTS.selected || 'Seleccionado'}
           </Text>
           <View style={{ flexDirection: 'row', gap: 15 }}>
-            <TouchableOpacity onPress={handleMoveSelected}>
-              <FolderOpen color={colors.text} size={24} />
-            </TouchableOpacity>
+            {!hasFolderSelected && (
+              <TouchableOpacity onPress={handleMoveSelected}>
+                <FolderOpen color={colors.text} size={24} />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity onPress={handleDeleteSelected}>
               <Trash2 color={colors.danger} size={24} />
             </TouchableOpacity>
@@ -146,7 +161,7 @@ export default function HomeScreen() {
     return (
       <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: colors.headerBorder || '#eee' }]}>
         <Text style={[styles.title, { color: colors.text }]}>{TEXTS.myKeys}</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
+        <TouchableOpacity style={styles.addButton} onPress={() => setAddModalVisible(true)}>
           <Plus color="white" size={24} />
         </TouchableOpacity>
       </View>
@@ -183,7 +198,7 @@ export default function HomeScreen() {
               account={item}
               selectionMode={selectionMode}
               isSelected={isSel}
-              onPress={() => handleItemPress(item)} // OJO: TotpCard espera (account) => void
+              onPress={() => handleItemPress(item)}
               onLongPress={() => handleLongPress(item)}
             />
           );
@@ -198,25 +213,24 @@ export default function HomeScreen() {
         }
       />
 
-      {/* MODAL DEL MENÚ + */}
+      {/* MODAL 1: ADD */}
       {!selectionMode && (
         <Modal
           animationType="slide"
           transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => setModalVisible(false)}
+          visible={addModalVisible}
+          onRequestClose={() => setAddModalVisible(false)}
         >
           <TouchableOpacity
             style={styles.modalOverlay}
             activeOpacity={1}
-            onPress={() => setModalVisible(false)}
+            onPress={() => setAddModalVisible(false)}
           >
             <View style={[styles.modalContent, { backgroundColor: colors.modalBg || 'white' }]}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>{TEXTS.addAccount || 'Añadir'}</Text>
 
-              {/* Opción 1: Escanear */}
               <TouchableOpacity style={styles.modalOption} onPress={() => {
-                setModalVisible(false);
+                setAddModalVisible(false);
                 router.push('/scan-qr');
               }}>
                 <QrCode size={24} color={colors.text} style={{ marginRight: 15 }} />
@@ -225,28 +239,107 @@ export default function HomeScreen() {
 
               <View style={{ height: 1, backgroundColor: colors.headerBorder || '#eee', marginVertical: 5 }} />
 
-              {/* Opción 2: Manual */}
-              <TouchableOpacity style={styles.modalOption} onPress={() => { setModalVisible(false); router.push('/add-account'); }}>
+              <TouchableOpacity style={styles.modalOption} onPress={() => { setAddModalVisible(false); router.push('/add-account'); }}>
                 <Keyboard size={24} color={colors.text} style={{ marginRight: 15 }} />
                 <Text style={[styles.optionText, { color: colors.text }]}>{TEXTS.manualEntry || 'Manual'}</Text>
               </TouchableOpacity>
 
               <View style={{ height: 1, backgroundColor: colors.headerBorder || '#eee', marginVertical: 5 }} />
 
-              {/* Opción 3: NUEVA CARPETA */}
-              <TouchableOpacity style={styles.modalOption} onPress={() => { setModalVisible(false); router.push('/add-folder'); }}>
+              <TouchableOpacity style={styles.modalOption} onPress={() => { setAddModalVisible(false); router.push('/add-folder'); }}>
                 <FolderPlus size={24} color={colors.text} style={{ marginRight: 15 }} />
-                <Text style={[styles.optionText, { color: colors.text }]}>Crear Carpeta</Text>
+                <Text style={[styles.optionText, { color: colors.text }]}>{TEXTS.createFolder}</Text>
               </TouchableOpacity>
 
-              {/* Cancelar */}
-              <TouchableOpacity style={[styles.cancelButton]} onPress={() => setModalVisible(false)}>
-                <Text style={{ color: colors.danger, fontWeight: 'bold', fontSize: 16 }}>{TEXTS.cancel || 'Cancelar'}</Text>
+              <TouchableOpacity style={[styles.cancelButton]} onPress={() => setAddModalVisible(false)}>
+                <Text style={{ color: colors.danger, fontWeight: 'bold', fontSize: 16 }}>{TEXTS.cancel}</Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
         </Modal>
       )}
+
+      {/* MODAL 2: MOVE TO FOLDER */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={moveModalVisible}
+        onRequestClose={() => setMoveModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setMoveModalVisible(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: colors.modalBg || 'white', maxHeight: '60%' }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Mover a carpeta</Text>
+            <Text style={{ color: colors.subtext, textAlign: 'center', marginBottom: 15 }}>
+              Selecciona el destino para {selectedIds.length} cuenta(s)
+            </Text>
+
+            <ScrollView>
+              {folders.map((folder) => (
+                <TouchableOpacity
+                  key={folder.id}
+                  style={[styles.folderItem, { borderBottomColor: colors.headerBorder || '#eee' }]}
+                  onPress={() => performBatchMove(folder.id)}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <FolderIcon size={20} color={folder.color || colors.text} style={{ marginRight: 12 }} />
+                    <Text style={[styles.optionText, { color: colors.text, fontSize: 16 }]}>{folder.name}</Text>
+                  </View>
+                  <ArrowRight size={18} color={colors.subtext} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <TouchableOpacity style={[styles.cancelButton, { marginTop: 10 }]} onPress={() => setMoveModalVisible(false)}>
+              <Text style={{ color: colors.danger, fontWeight: 'bold', fontSize: 16 }}>{TEXTS.cancel}</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* MODAL 3: DELETE */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={deleteModalVisible}
+        onRequestClose={() => setDeleteModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setDeleteModalVisible(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: colors.modalBg || 'white' }]}>
+            <View style={{ alignItems: 'center', marginBottom: 15 }}>
+              <AlertTriangle size={48} color={colors.danger} />
+            </View>
+
+            <Text style={[styles.modalTitle, { color: colors.text, marginBottom: 10 }]}>{TEXTS.deleteItems}</Text>
+
+            <Text style={[styles.modalDescription, { color: colors.subtext }]}>
+              {TEXTS.confirmDelete} <Text style={{ fontWeight: 'bold', color: colors.text }}>{selectedIds.length} {TEXTS.confirmDelete2}</Text>.
+              {TEXTS.confirmDelete3}
+            </Text>
+
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={performBatchDelete}
+            >
+              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>{TEXTS.deleteDefinitely}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.cancelButton, { backgroundColor: 'transparent', marginTop: 5 }]}
+              onPress={() => setDeleteModalVisible(false)}
+            >
+              <Text style={{ color: colors.text, fontSize: 16 }}>{TEXTS.cancel}</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
     </View>
   );
@@ -263,8 +356,30 @@ const styles = StyleSheet.create({
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },
   modalOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16 },
   optionText: { fontSize: 18 },
-  cancelButton: { marginTop: 20, padding: 15, borderRadius: 12, alignItems: 'center', backgroundColor: "#202122" }
+  cancelButton: { marginTop: 20, padding: 15, borderRadius: 12, alignItems: 'center', backgroundColor: "#202122" },
+  folderItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    borderBottomWidth: 1
+  },
+  // ESTILOS NUEVOS PARA EL MODAL DE BORRADO
+  modalDescription: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 22
+  },
+  deleteButton: {
+    backgroundColor: '#ef4444', // Rojo intenso
+    padding: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 5
+  }
 });
