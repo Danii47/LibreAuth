@@ -1,12 +1,13 @@
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, Modal, useColorScheme, StatusBar, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useState, useCallback } from 'react';
-import { Plus, QrCode, Keyboard, Trash2, ArrowLeft, X, FolderOpen, Folder as FolderIcon, ArrowRight, Home, AlertTriangle } from 'lucide-react-native';
+import { Plus, QrCode, Keyboard, Trash2, ArrowLeft, X, FolderOpen, Folder as FolderIcon, ArrowRight, Home } from 'lucide-react-native';
 import { TotpCard } from '../../components/TotpCard';
 import { loadAuthData, saveAuthData } from '../../storage/secureStore';
 import { Account, Folder } from '../../types';
 import { TEXTS } from '../../constants/Languages';
 import { getColors } from '../../constants/Styles';
+import { DeleteModal } from '@/components/DeleteModal';
 
 export default function FolderScreen() {
   const router = useRouter();
@@ -187,7 +188,7 @@ export default function FolderScreen() {
             <View style={styles.emptyState}>
               <Text style={[styles.emptyText, { color: colors.text }]}>{TEXTS.empty}</Text>
               <Text style={[styles.emptySubtext, { color: colors.subtext }]}>
-                Esta carpeta está vacía.
+                {TEXTS.emptyFolder}
               </Text>
             </View>
           ) : null
@@ -283,46 +284,13 @@ export default function FolderScreen() {
       </Modal>
 
       {/* MODAL 3: DELETE ACCOUNTS */}
-      <Modal
-        animationType="slide"
-        transparent={true}
+      <DeleteModal
         visible={deleteModalVisible}
-        onRequestClose={() => setDeleteModalVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setDeleteModalVisible(false)}
-        >
-          <View style={[styles.modalContent, { backgroundColor: colors.modalBg }]}>
-            <View style={{ alignItems: 'center', marginBottom: 15 }}>
-              <AlertTriangle size={48} color={colors.danger} />
-            </View>
-
-            <Text style={[styles.modalTitle, { color: colors.text, marginBottom: 10 }]}>{TEXTS.deleteAccounts}</Text>
-
-            <Text style={[styles.modalDescription, { color: colors.subtext }]}>
-              {TEXTS.confirmDelete} <Text style={{ fontWeight: 'bold', color: colors.text }}>{selectedIds.length} {TEXTS.confirmDelete2}</Text> {TEXTS.confirmDelete3}
-            </Text>
-
-            <TouchableOpacity
-              style={styles.deleteButton}
-              onPress={performBatchDelete}
-            >
-              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
-                {TEXTS.deleteDefinitely}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.cancelButton, { backgroundColor: 'transparent', marginTop: 5 }]}
-              onPress={() => setDeleteModalVisible(false)}
-            >
-              <Text style={{ color: colors.text, fontSize: 16 }}>{TEXTS.cancel}</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        onClose={() => setDeleteModalVisible(false)}
+        onConfirm={performBatchDelete}
+        count={selectedIds.length}
+        colors={colors}
+      />
 
     </View>
   );
@@ -348,20 +316,5 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 16,
     borderBottomWidth: 1
-  },
-  // ESTILOS NUEVOS PARA EL MODAL DE BORRADO
-  modalDescription: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 25,
-    lineHeight: 22
-  },
-  deleteButton: {
-    backgroundColor: '#ef4444', // Rojo intenso
-    padding: 15,
-    borderRadius: 12,
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 5
   }
 });

@@ -1,13 +1,14 @@
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, Modal, useColorScheme, StatusBar, ScrollView } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useState, useCallback } from 'react';
-import { Plus, QrCode, Keyboard, Trash2, FolderOpen, X, FolderPlus, Folder as FolderIcon, ArrowRight, AlertTriangle } from 'lucide-react-native';
+import { Plus, QrCode, Keyboard, Trash2, FolderOpen, X, FolderPlus, Folder as FolderIcon, ArrowRight } from 'lucide-react-native';
 import { TotpCard } from '../../components/TotpCard';
 import { FolderCard } from '../../components/FolderCard';
 import { loadAuthData, saveAuthData } from '../../storage/secureStore';
 import { Account, Folder } from '../../types';
 import { TEXTS } from '../../constants/Languages';
 import { getColors } from '../../constants/Styles';
+import { DeleteModal } from '@/components/DeleteModal';
 
 type ListItem = Account | Folder;
 
@@ -143,7 +144,7 @@ export default function HomeScreen() {
             <X color={colors.text} size={24} />
           </TouchableOpacity>
           <Text style={[styles.title, { fontSize: 20, color: colors.text }]}>
-            {selectedIds.length} {TEXTS.selected || 'Seleccionado'}
+            {selectedIds.length} {TEXTS.selected}
           </Text>
           <View style={{ flexDirection: 'row', gap: 15 }}>
             {!hasFolderSelected && (
@@ -206,8 +207,8 @@ export default function HomeScreen() {
         ListEmptyComponent={
           !loading ? (
             <View style={styles.emptyState}>
-              <Text style={[styles.emptyText, { color: colors.text }]}>{TEXTS.empty || "No hay nada aquí"}</Text>
-              <Text style={[styles.emptySubtext, { color: colors.subtext }]}>{TEXTS.emptySub || "Pulsa + para empezar"}</Text>
+              <Text style={[styles.emptyText, { color: colors.text }]}>{TEXTS.empty}</Text>
+              <Text style={[styles.emptySubtext, { color: colors.subtext }]}>{TEXTS.pressToStart}</Text>
             </View>
           ) : null
         }
@@ -227,21 +228,21 @@ export default function HomeScreen() {
             onPress={() => setAddModalVisible(false)}
           >
             <View style={[styles.modalContent, { backgroundColor: colors.modalBg || 'white' }]}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>{TEXTS.addAccount || 'Añadir'}</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>{TEXTS.addAccount}</Text>
 
               <TouchableOpacity style={styles.modalOption} onPress={() => {
                 setAddModalVisible(false);
                 router.push('/scan-qr');
               }}>
                 <QrCode size={24} color={colors.text} style={{ marginRight: 15 }} />
-                <Text style={[styles.optionText, { color: colors.text }]}>{TEXTS.scanQR || 'Escanear QR'}</Text>
+                <Text style={[styles.optionText, { color: colors.text }]}>{TEXTS.scanQR}</Text>
               </TouchableOpacity>
 
               <View style={{ height: 1, backgroundColor: colors.headerBorder || '#eee', marginVertical: 5 }} />
 
               <TouchableOpacity style={styles.modalOption} onPress={() => { setAddModalVisible(false); router.push('/add-account'); }}>
                 <Keyboard size={24} color={colors.text} style={{ marginRight: 15 }} />
-                <Text style={[styles.optionText, { color: colors.text }]}>{TEXTS.manualEntry || 'Manual'}</Text>
+                <Text style={[styles.optionText, { color: colors.text }]}>{TEXTS.manualEntry}</Text>
               </TouchableOpacity>
 
               <View style={{ height: 1, backgroundColor: colors.headerBorder || '#eee', marginVertical: 5 }} />
@@ -301,45 +302,13 @@ export default function HomeScreen() {
       </Modal>
 
       {/* MODAL 3: DELETE */}
-      <Modal
-        animationType="slide"
-        transparent={true}
+      <DeleteModal
         visible={deleteModalVisible}
-        onRequestClose={() => setDeleteModalVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setDeleteModalVisible(false)}
-        >
-          <View style={[styles.modalContent, { backgroundColor: colors.modalBg || 'white' }]}>
-            <View style={{ alignItems: 'center', marginBottom: 15 }}>
-              <AlertTriangle size={48} color={colors.danger} />
-            </View>
-
-            <Text style={[styles.modalTitle, { color: colors.text, marginBottom: 10 }]}>{TEXTS.deleteItems}</Text>
-
-            <Text style={[styles.modalDescription, { color: colors.subtext }]}>
-              {TEXTS.confirmDelete} <Text style={{ fontWeight: 'bold', color: colors.text }}>{selectedIds.length} {TEXTS.confirmDelete2}</Text>.
-              {TEXTS.confirmDelete3}
-            </Text>
-
-            <TouchableOpacity
-              style={styles.deleteButton}
-              onPress={performBatchDelete}
-            >
-              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>{TEXTS.deleteDefinitely}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.cancelButton, { backgroundColor: 'transparent', marginTop: 5 }]}
-              onPress={() => setDeleteModalVisible(false)}
-            >
-              <Text style={{ color: colors.text, fontSize: 16 }}>{TEXTS.cancel}</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        onClose={() => setDeleteModalVisible(false)}
+        onConfirm={performBatchDelete}
+        count={selectedIds.length}
+        colors={colors}
+      />
 
     </View>
   );
@@ -367,19 +336,4 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1
   },
-  // ESTILOS NUEVOS PARA EL MODAL DE BORRADO
-  modalDescription: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 25,
-    lineHeight: 22
-  },
-  deleteButton: {
-    backgroundColor: '#ef4444', // Rojo intenso
-    padding: 15,
-    borderRadius: 12,
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 5
-  }
 });
