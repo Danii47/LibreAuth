@@ -1,11 +1,11 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, X } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View, StatusBar, Platform } from 'react-native';
-import { extractOTPParams } from '../utils/totp'; // Importa tu función
+import { Alert, StyleSheet, Text, TouchableOpacity, View, StatusBar, useColorScheme } from 'react-native';
+import { extractOTPParams } from '../utils/totp';
 import { getColors } from '../constants/Styles';
-import { useColorScheme } from 'react-native';
+import { TEXTS } from '@/constants/Languages';
 
 export default function ScanQrScreen() {
   const router = useRouter();
@@ -16,7 +16,6 @@ export default function ScanQrScreen() {
   const [scanned, setScanned] = useState(false);
 
   if (!permission) {
-    // Cargando permisos...
     return <View style={[styles.container, { backgroundColor: colors.background }]} />;
   }
 
@@ -24,32 +23,31 @@ export default function ScanQrScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
         <Text style={{ color: colors.text, textAlign: 'center', marginBottom: 20, fontSize: 18 }}>
-          Necesitamos acceso a la cámara para escanear el código QR.
+          {TEXTS.cameraAccessMsg}
         </Text>
         <TouchableOpacity
           style={{ backgroundColor: colors.tint, padding: 15, borderRadius: 10 }}
           onPress={requestPermission}
         >
-          <Text style={{ color: 'white', fontWeight: 'bold' }}>Conceder Permiso</Text>
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>{TEXTS.grantPermission}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={{ marginTop: 20 }}
           onPress={() => router.back()}
         >
-          <Text style={{ color: colors.danger }}>Cancelar</Text>
+          <Text style={{ color: colors.danger }}>{TEXTS.cancel}</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
-    if (scanned) return; // Evita lecturas múltiples rápidas
+    if (scanned) return;
     setScanned(true);
 
-    const params = extractOTPParams(data);
+    try {
+      const params = extractOTPParams(data)!;
 
-    if (params) {
-      // ÉXITO: Navegamos a Add Account con los datos (REPLACE para no volver a cámara al dar atrás)
       router.replace({
         pathname: '/add-account',
         params: {
@@ -58,11 +56,11 @@ export default function ScanQrScreen() {
           scannedName: params.accountName || ''
         }
       });
-    } else {
+    } catch {
       Alert.alert(
-        "Código no válido",
-        "El código QR escaneado no parece ser un código de autenticación válido.",
-        [{ text: "OK", onPress: () => setScanned(false) }] // Reseteamos para escanear otro
+        TEXTS.invalidCode,
+        TEXTS.invalidCodeMsg,
+        [{ text: TEXTS.ok, onPress: () => setScanned(false) }]
       );
     }
   };
@@ -79,13 +77,11 @@ export default function ScanQrScreen() {
         }}
       />
 
-      {/* OVERLAY OSCURO CON HUECO PARA EL QR (Diseño Profesional) */}
       <View style={styles.overlay}>
         <View style={styles.unfocusedContainer}></View>
         <View style={styles.middleContainer}>
           <View style={styles.unfocusedContainer}></View>
           <View style={styles.focusedContainer}>
-            {/* Esquinas visuales del scanner */}
             <View style={[styles.corner, { top: 0, left: 0, borderTopWidth: 4, borderLeftWidth: 4 }]} />
             <View style={[styles.corner, { top: 0, right: 0, borderTopWidth: 4, borderRightWidth: 4 }]} />
             <View style={[styles.corner, { bottom: 0, left: 0, borderBottomWidth: 4, borderLeftWidth: 4 }]} />
@@ -96,7 +92,6 @@ export default function ScanQrScreen() {
         <View style={styles.unfocusedContainer}></View>
       </View>
 
-      {/* HEADER FLOTANTE */}
       <View style={styles.headerBtn}>
         <TouchableOpacity
           style={[styles.closeBtn, { backgroundColor: 'rgba(0,0,0,0.6)' }]}
@@ -105,7 +100,7 @@ export default function ScanQrScreen() {
           <X color="white" size={24} />
         </TouchableOpacity>
         <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold', marginTop: 20 }}>
-          Escanea el código QR
+          {TEXTS.scanQR2}
         </Text>
       </View>
 
@@ -121,10 +116,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     position: 'absolute', left: 20, top: 0
   },
-  // Estilos del Overlay (Hueco cuadrado)
   overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   unfocusedContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)' },
   middleContainer: { flexDirection: 'row', flex: 1.5 },
-  focusedContainer: { flex: 10, position: 'relative' }, // El hueco transparente
+  focusedContainer: { flex: 10, position: 'relative' },
   corner: { position: 'absolute', width: 20, height: 20, borderColor: '#fff' }
 });
