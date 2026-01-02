@@ -1,7 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 import { AuthData } from "../types";
 
-const STORAGE_KEY = "2fa_auth_data";
+const STORAGE_KEY = "libreauth_secure_data";
 
 export const saveAuthData = async (data: AuthData): Promise<void> => {
   try {
