@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { CheckCircle, Circle, ChevronRight } from 'lucide-react-native';
+import { CheckCircle, Circle, ChevronRight, GripVertical } from 'lucide-react-native'; // <--- Importado GripVertical
 import { Folder } from '../types';
 import { TEXTS } from '../constants/Languages';
 import { getColors } from '../constants/Styles';
@@ -12,13 +12,17 @@ interface Props {
   onLongPress: (folder: Folder) => void;
   selectionMode: boolean;
   isSelected: boolean;
+  drag?: () => void;
+  isActive?: boolean;
 }
 
-export const FolderCard = ({ folder, onPress, onLongPress, selectionMode, isSelected }: Props) => {
+export const FolderCard = ({ folder, onPress, onLongPress, selectionMode, isSelected, drag, isActive }: Props) => {
   const scheme = useColorScheme();
   const colors = getColors(scheme);
 
   const handlePress = () => {
+    if (isActive) return;
+
     if (selectionMode) {
       onPress(folder);
       Haptics.selectionAsync();
@@ -29,9 +33,11 @@ export const FolderCard = ({ folder, onPress, onLongPress, selectionMode, isSele
 
   const cardColor = folder.color || colors.tint;
 
-  const backgroundColor = isSelected
-    ? (scheme === 'dark' ? '#3A3A3C' : '#E8F0FE')
-    : colors.card;
+  const backgroundColor = isActive
+    ? (scheme === 'dark' ? '#444' : '#dcecfc')
+    : (isSelected
+      ? (scheme === 'dark' ? '#3A3A3C' : '#E8F0FE')
+      : colors.card);
 
   const basePadding = 16;
   const borderSize = isSelected ? 2 : 0;
@@ -40,7 +46,7 @@ export const FolderCard = ({ folder, onPress, onLongPress, selectionMode, isSele
     paddingTop: basePadding - borderSize,
     paddingBottom: basePadding - borderSize,
     paddingRight: basePadding - borderSize,
-    paddingLeft: basePadding,
+    paddingLeft: basePadding - borderSize,
   };
 
   return (
@@ -56,13 +62,18 @@ export const FolderCard = ({ folder, onPress, onLongPress, selectionMode, isSele
         }
       ]}
       onPress={handlePress}
-      onLongPress={() => onLongPress(folder)}
-      delayLongPress={400}
+      onLongPress={() => !isActive && !selectionMode && onLongPress(folder)}
+      delayLongPress={300}
       activeOpacity={0.7}
+      disabled={isActive}
     >
       <View style={[styles.contentContainer, dynamicPaddingStyle]}>
+        {selectionMode && drag && (
+          <TouchableOpacity onPressIn={drag} style={styles.dragHandleLeft}>
+            <GripVertical size={24} color={colors.subtext} />
+          </TouchableOpacity>
+        )}
 
-        {/* LEFT: ICON + TEXT */}
         <View style={styles.leftSection}>
           <View style={[styles.iconBox, { backgroundColor: cardColor + '15' }]}>
             <AppIcon name={folder.icon || 'home'} size={24} color={cardColor} />
@@ -78,7 +89,6 @@ export const FolderCard = ({ folder, onPress, onLongPress, selectionMode, isSele
           </View>
         </View>
 
-        {/* RIGHT: Check or Arrow */}
         <View style={styles.rightSide}>
           {selectionMode ? (
             <View style={{ paddingLeft: 10 }}>
@@ -109,6 +119,12 @@ const styles = StyleSheet.create({
   contentContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  // Estilo para el asa a la izquierda
+  dragHandleLeft: {
+    paddingRight: 10,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   leftSection: {
