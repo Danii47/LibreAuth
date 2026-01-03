@@ -26,7 +26,7 @@ export default function AddFolderScreen() {
 
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState(ACCOUNT_COLORS[0]);
-  const [selectedIcon, setSelectedIcon] = useState('default');
+  const [selectedIcon, setSelectedIcon] = useState('folder');
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -41,11 +41,19 @@ export default function AddFolderScreen() {
     try {
       const data = await loadAuthData();
 
+      const rootAccounts = data.accounts.filter(acc => !acc.folderId);
+      const siblings = [...data.folders, ...rootAccounts];
+
+      const maxPosition = Math.max(...siblings.map(sib => sib.position), -1);
+
+      const newPosition = maxPosition + 1;
+
       const newFolder: Folder = {
         id: Date.now().toString(),
         name: name.trim(),
         color: selectedColor,
         icon: selectedIcon,
+        position: newPosition,
         createdAt: Date.now(),
       };
 

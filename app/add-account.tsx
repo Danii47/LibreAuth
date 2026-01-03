@@ -81,6 +81,20 @@ export default function AddAccountScreen() {
 
     try {
       const data = await loadAuthData();
+
+      let siblings: { position: number }[] = [];
+
+      if (selectedFolderId) {
+        siblings = data.accounts.filter(acc => acc.folderId === selectedFolderId);
+      } else {
+        const rootAccounts = data.accounts.filter(acc => !acc.folderId);
+        siblings = [...data.folders, ...rootAccounts];
+      }
+
+      const maxPosition = Math.max(...siblings.map(sib => sib.position), -1);
+
+      const newPosition = maxPosition + 1;
+
       const newAccount: Account = {
         id: Date.now().toString(),
         name: name.trim(),
@@ -90,7 +104,8 @@ export default function AddAccountScreen() {
         color: selectedColor,
         createdAt: Date.now(),
         icon: selectedIcon,
-        folderId: selectedFolderId // <--- Guardamos la carpeta seleccionada
+        position: newPosition,
+        folderId: selectedFolderId
       };
 
       data.accounts.push(newAccount);
@@ -133,7 +148,7 @@ export default function AddAccountScreen() {
                 backgroundColor: colors.card,
                 color: colors.text,
                 borderColor: focusedField === 'name' ? selectedColor : colors.headerBorder,
-                borderWidth: focusedField === 'name' ? 2 : 1
+                borderWidth: 2
               }
             ]}
             placeholder={TEXTS.accNamePlace}
@@ -153,7 +168,7 @@ export default function AddAccountScreen() {
                 backgroundColor: colors.card,
                 color: colors.text,
                 borderColor: focusedField === 'issuer' ? selectedColor : colors.headerBorder,
-                borderWidth: focusedField === 'issuer' ? 2 : 1
+                borderWidth: 2
               }
             ]}
             placeholder={TEXTS.issuerPlace}
@@ -171,7 +186,7 @@ export default function AddAccountScreen() {
             {
               backgroundColor: colors.card,
               borderColor: focusedField === 'secret' ? selectedColor : colors.headerBorder,
-              borderWidth: focusedField === 'secret' ? 2 : 1
+              borderWidth: 2
             }
           ]}>
             <TextInput
