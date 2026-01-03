@@ -15,6 +15,8 @@ export interface Account {
   // Organization
   folderId?: string; // null or id of the folder
   createdAt: number;
+
+  position: number; // For ordering within folder or root
 }
 
 export interface Folder {
@@ -23,6 +25,8 @@ export interface Folder {
   color?: string;
   icon?: string;
   createdAt: number;
+
+  position: number;
 }
 
 // Root object
