@@ -31,3 +31,14 @@ export const loadAuthData = async (): Promise<AuthData> => {
 export const clearAllData = async () => {
   await SecureStore.deleteItemAsync(STORAGE_KEY);
 };
+
+const BIOMETRIC_KEY = "auth_biometric_enabled";
+
+export const getBiometricEnabled = async (): Promise<boolean> => {
+  const result = await SecureStore.getItemAsync(BIOMETRIC_KEY);
+  return result === null ? true : result === "true";
+};
+
+export const setBiometricEnabled = async (enabled: boolean): Promise<void> => {
+  await SecureStore.setItemAsync(BIOMETRIC_KEY, String(enabled));
+};
