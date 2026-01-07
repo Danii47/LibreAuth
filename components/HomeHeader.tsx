@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Plus, Trash2, FolderOpen, X, Settings, Pencil } from 'lucide-react-native';
 import { TEXTS } from '@/constants/Languages';

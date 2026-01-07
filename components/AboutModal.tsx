@@ -1,4 +1,3 @@
-import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Linking, ScrollView, Image } from 'react-native';
 import { GitBranch, Code, Heart, X } from 'lucide-react-native';
 import { APP_GITHUB_URL, APP_NAME, APP_VERSION } from '@/constants/AppInformation';

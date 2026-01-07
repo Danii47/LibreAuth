@@ -1,4 +1,3 @@
-import React from 'react';
 import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { ExternalLink } from 'lucide-react-native';
 

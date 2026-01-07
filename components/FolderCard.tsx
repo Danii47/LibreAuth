@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { CheckCircle, Circle, ChevronRight, GripVertical } from 'lucide-react-native'; // <--- Importado GripVertical
+import { CheckCircle, Circle, ChevronRight, GripVertical } from 'lucide-react-native';
 import { Folder } from '../types';
 import { TEXTS } from '../constants/Languages';
 import { getColors } from '../constants/Styles';
