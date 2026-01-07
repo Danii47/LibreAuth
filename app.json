@@ -8,11 +8,11 @@
     "scheme": "libreauth",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "backgroundColor": "#121212",
+    "backgroundColor": "#0a1b34",
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#121212"
+      "backgroundColor": "#0a1b34"
     },
     "ios": {
       "supportsTablet": true,
@@ -20,8 +20,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#121212",
-        "foregroundImage": "./assets/images/android-icon-foreground.png"
+        "backgroundColor": "#0a1b34",
+        "foregroundImage": "./assets/images/splash-icon.png"
       },
       "package": "com.dani47.libreauth",
       "permissions": [
@@ -39,16 +39,16 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#121212",
+          "backgroundColor": "#0a1b34",
           "dark": {
-            "backgroundColor": "#121212"
+            "backgroundColor": "#0a1b34"
           }
         }
       ],
       [
         "expo-camera",
         {
-          "cameraPermission": "LibreAuth necesita acceso a la cámara para escanear códigos QR."
+          "cameraPermission": "LibreAuth needs access to the camera to scan QR codes."
         }
       ],
       "expo-secure-store",
