@@ -86,8 +86,8 @@ export const AddOptionsModal = ({
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity style={[styles.cancelButton]} onPress={onClose}>
-            <Text style={{ color: colors.danger || '#ef4444', fontWeight: 'bold', fontSize: 16 }}>
+          <TouchableOpacity style={[styles.cancelButton, { backgroundColor: colors.cancelButtonBg }]} onPress={onClose}>
+            <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 16 }}>
               {TEXTS.cancel}
             </Text>
           </TouchableOpacity>
