@@ -1,8 +1,8 @@
 # Política de Privacidad
 
-**Última actualización:** 02/01/2026
+**Última actualización:** 07/01/2026
 
-Esta Política de Privacidad describe cómo la aplicación **LibreAuth** ("nosotros", "nuestro" o "la Aplicación") maneja tus datos.
+Esta Política de Privacidad describe cómo la aplicación **LibreAuth** maneja tus datos.
 
 Creemos firmemente en la privacidad del usuario. Nuestra política es simple: **No recopilamos, almacenamos ni compartimos tus datos personales.**
 
