@@ -109,6 +109,7 @@ export default function AddFolderScreen() {
           <ColorPicker
             selectedColor={selectedColor}
             onSelect={setSelectedColor}
+            colors={colors}
           />
 
           {/* SAVE BUTTON */}

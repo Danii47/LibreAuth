@@ -125,7 +125,7 @@ export default function AddAccountScreen() {
           <IconPicker selectedIcon={form.icon} onSelect={i => updateForm('icon', i)} selectedColor={form.color} colors={colors} />
 
           <Text style={[styles.label, { color: colors.subtext }]}>{TEXTS.colorLabel}</Text>
-          <ColorPicker selectedColor={form.color} onSelect={c => updateForm('color', c)} />
+          <ColorPicker selectedColor={form.color} onSelect={c => updateForm('color', c)} colors={colors} />
 
           <TouchableOpacity style={[styles.saveBtn, { backgroundColor: form.color }]} onPress={handleSave} disabled={loading}>
             <Save size={20} color="white" />
