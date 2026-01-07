@@ -62,7 +62,7 @@ export const FolderCard = ({ folder, onPress, onLongPress, selectionMode, isSele
         }
       ]}
       onPress={handlePress}
-      onLongPress={() => !isActive && !selectionMode && onLongPress(folder)}
+      onLongPress={() => !isActive && onLongPress(folder)}
       delayLongPress={300}
       activeOpacity={0.7}
       disabled={isActive}
@@ -75,8 +75,8 @@ export const FolderCard = ({ folder, onPress, onLongPress, selectionMode, isSele
         )}
 
         <View style={styles.leftSection}>
-          <View style={[styles.iconBox, { backgroundColor: cardColor + '15' }]}>
-            <AppIcon name={folder.icon || 'home'} size={24} color={cardColor} />
+          <View style={[styles.iconBox, { backgroundColor: cardColor + '25' }]}>
+            <AppIcon name={folder.icon} size={24} color={cardColor} />
           </View>
 
           <View style={styles.textContainer}>
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    marginRight: 10,
   },
   textContainer: { flex: 1, justifyContent: 'center' },
   name: { fontSize: 16, fontWeight: 'bold' },

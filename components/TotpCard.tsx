@@ -1,7 +1,7 @@
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { CheckCircle, Circle, GripVertical } from 'lucide-react-native';
-import { useEffect, useRef, useState, memo } from 'react'; // Mantén memo
+import { useEffect, useRef, useState, memo } from 'react';
 import { Animated, Platform, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { TEXTS } from '../constants/Languages';
 import { getColors } from '../constants/Styles';
@@ -70,12 +70,12 @@ export const TotpCard = memo(({ account, onPress, onLongPress, selectionMode, is
 
       if (isRevealed) {
         if (revealTimeout.current) clearTimeout(revealTimeout.current);
-        revealTimeout.current = setTimeout(() => animateTransition(false), 10000);
+        revealTimeout.current = setTimeout(() => animateTransition(false), 6000);
         return;
       }
       animateTransition(true);
       if (revealTimeout.current) clearTimeout(revealTimeout.current);
-      revealTimeout.current = setTimeout(() => animateTransition(false), 10000);
+      revealTimeout.current = setTimeout(() => animateTransition(false), 6000);
     }
   };
 
@@ -94,7 +94,7 @@ export const TotpCard = memo(({ account, onPress, onLongPress, selectionMode, is
     paddingTop: basePadV - borderSize,
     paddingBottom: basePadV - borderSize,
     paddingRight: basePadH - borderSize,
-    paddingLeft: basePadH - borderSize
+    paddingLeft: basePadH
   };
 
   const codeDisplay = isRevealed ? `${code.slice(0, 3)} ${code.slice(3)}` : "••• •••";
@@ -113,7 +113,7 @@ export const TotpCard = memo(({ account, onPress, onLongPress, selectionMode, is
         }
       ]}
       onPress={handlePress}
-      onLongPress={() => !isActive && !selectionMode && onLongPress(account)}
+      onLongPress={() => !isActive && onLongPress(account)}
       delayLongPress={300}
       activeOpacity={0.7}
       disabled={isActive}
@@ -127,7 +127,7 @@ export const TotpCard = memo(({ account, onPress, onLongPress, selectionMode, is
         )}
 
         <View style={styles.centerSection}>
-          <View style={[styles.iconBox, { backgroundColor: cardColor + '20' }]}>
+          <View style={[styles.iconBox, { backgroundColor: cardColor + '25' }]}>
             <AppIcon name={account.icon} size={24} color={cardColor} />
           </View>
           <View style={styles.textContainer}>
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   centerSection: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 6 },
-  iconBox: { width: 38, height: 38, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+  iconBox: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
   textContainer: { justifyContent: 'center', flex: 1 },
   issuer: { fontSize: 12, fontWeight: '600', marginBottom: 1 },
   name: { fontSize: 16, fontWeight: 'bold' },
