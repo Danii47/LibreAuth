@@ -159,7 +159,10 @@ export default function FolderScreen() {
 
   const handleScanQR = () => {
     setAddModalVisible(false);
-    router.push('/scan-qr');
+    router.push({
+      pathname: '/scan-qr',
+      params: { initialFolderId: id }
+    });
   };
   const handleManualEntry = () => {
     setAddModalVisible(false);
