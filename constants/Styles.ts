@@ -13,5 +13,7 @@ export const getColors = (scheme: "light" | "dark" | null | undefined) => {
     success: "#34C759",
     overlay: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.5)",
     modalBg: isDark ? "#1b1b1dff" : "#FFFFFF",
+    buttonBg: isDark ? "#2C2C2E" : "#E2E8F0",
+    cancelButtonBg: isDark ? "#2C2C2E" : "#E2E8F0",
   };
 };
