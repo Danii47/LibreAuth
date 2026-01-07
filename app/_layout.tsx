@@ -13,6 +13,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getColors } from '../constants/Styles';
 import { getBiometricEnabled } from '../storage/secureStore';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { TEXTS } from '@/constants/Languages';
 
 global.Buffer = Buffer;
 
@@ -35,10 +36,10 @@ export default function RootLayout() {
   const authenticate = useCallback(async () => {
     try {
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Desbloquear LibreAuth',
-        fallbackLabel: 'Usar PIN',
+        promptMessage: TEXTS.unlockApp,
+        fallbackLabel: TEXTS.usePin,
         disableDeviceFallback: false,
-        cancelLabel: 'Cancelar'
+        cancelLabel: TEXTS.cancel
       });
 
       if (result.success) {
@@ -119,11 +120,11 @@ export default function RootLayout() {
                 <Lock size={64} color={colors.tint} />
               </View>
 
-              <Text style={[styles.lockTitle, { color: colors.text }]}>LibreAuth bloqueado</Text>
+              <Text style={[styles.lockTitle, { color: colors.text }]}>{TEXTS.appBlocked}</Text>
               <Text style={[styles.lockSubtitle, { color: colors.subtext }]}>
                 {isBiometricSupported
-                  ? "Verifica tu identidad para acceder."
-                  : "Introduce tu PIN o patrón para acceder."}
+                  ? TEXTS.verifyIdentity
+                  : TEXTS.verifyIdentityFallback}
               </Text>
 
               <TouchableOpacity
@@ -136,7 +137,7 @@ export default function RootLayout() {
                   <KeyRound size={24} color="white" style={{ marginRight: 10 }} />
                 )}
 
-                <Text style={styles.authButtonText}>Desbloquear</Text>
+                <Text style={styles.authButtonText}>{TEXTS.unlock}</Text>
               </TouchableOpacity>
             </View>
           </View>

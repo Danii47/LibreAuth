@@ -39,7 +39,7 @@ export const MoveToFolderModal = ({
           </Text>
 
           <Text style={{ color: colors.subtext, textAlign: 'center', marginBottom: 15 }}>
-            Selecciona el destino para {count} cuenta(s)
+            {TEXTS.selectDestination} {count} {TEXTS.selectDestination2}
           </Text>
 
           <ScrollView style={{ maxHeight: 300 }}>
@@ -75,9 +75,9 @@ export const MoveToFolderModal = ({
             ))}
           </ScrollView>
 
-          <TouchableOpacity style={[styles.cancelButton]} onPress={onClose}>
-            <Text style={{ color: colors.danger || '#ef4444', fontWeight: 'bold', fontSize: 16 }}>
-              {TEXTS.cancel || 'Cancelar'}
+          <TouchableOpacity style={[styles.cancelButton, { backgroundColor: colors.cancelButtonBg }]} onPress={onClose}>
+            <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 16 }}>
+              {TEXTS.cancel}
             </Text>
           </TouchableOpacity>
         </View>
@@ -113,7 +113,6 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 12,
     alignItems: 'center',
-    backgroundColor: "#202122"
   },
   folderItem: {
     flexDirection: 'row',

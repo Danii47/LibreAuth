@@ -1,6 +1,8 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Linking, ScrollView } from 'react-native';
-import { ShieldCheck, GitBranch, Code, Heart, X } from 'lucide-react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Linking, ScrollView, Image } from 'react-native';
+import { GitBranch, Code, Heart, X } from 'lucide-react-native';
+import { APP_GITHUB_URL, APP_NAME, APP_VERSION } from '@/constants/AppInformation';
+import { TEXTS } from '@/constants/Languages';
 
 interface AboutModalProps {
   visible: boolean;
@@ -11,7 +13,7 @@ interface AboutModalProps {
 export const AboutModal = ({ visible, onClose, colors }: AboutModalProps) => {
 
   const handleOpenGithub = () => {
-    Linking.openURL('https://github.com/Danii47/LibreAuth');
+    Linking.openURL(APP_GITHUB_URL);
   };
 
   return (
@@ -22,9 +24,9 @@ export const AboutModal = ({ visible, onClose, colors }: AboutModalProps) => {
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <View style={[styles.modalContent, { backgroundColor: colors.modalBg || 'white' }]}>
+        <View style={[styles.modalContent, { backgroundColor: colors.modalBg }]}>
 
-          {/* Close button */}
+          {/* CLOSE BUTTON */}
           <View style={styles.header}>
             <View style={{ width: 24 }} />
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -36,49 +38,50 @@ export const AboutModal = ({ visible, onClose, colors }: AboutModalProps) => {
 
             {/* LOGO AND VERSION */}
             <View style={styles.logoSection}>
-              <View style={[styles.iconContainer, { backgroundColor: '#e0f2fe' }]}>
-                <ShieldCheck size={48} color="#2e78b7" />
-              </View>
-              <Text style={[styles.appName, { color: colors.text }]}>LibreAuth</Text>
-              <Text style={[styles.version, { color: colors.subtext }]}>v1.0.0</Text>
+              <Image
+                source={require('../assets/images/icon.png')}
+                style={styles.appLogo}
+              />
+              <Text style={[styles.appName, { color: colors.text }]}>{APP_NAME}</Text>
+              <Text style={[styles.version, { color: colors.subtext }]}>{APP_VERSION}</Text>
             </View>
 
             {/* DESCRIPTION */}
             <Text style={[styles.description, { color: colors.text }]}>
-              Un autenticador de dos factores (2FA) seguro, privado y de código abierto. Tus claves nunca salen de tu dispositivo.
+              {TEXTS.appDescription}
             </Text>
 
             {/* DEVELOPER SECTION */}
             <TouchableOpacity style={[styles.githubButton, { backgroundColor: colors.headerBg }]} onPress={handleOpenGithub}>
               <GitBranch size={20} color={colors.text} style={{ marginRight: 10 }} />
-              <Text style={[styles.githubText, { color: colors.text }]}>Ver código en GitHub</Text>
+              <Text style={[styles.githubText, { color: colors.text }]}>{TEXTS.seeGitHub}</Text>
             </TouchableOpacity>
 
             <View style={[styles.divider, { backgroundColor: colors.headerBorder || '#eee' }]} />
 
             {/* TECHNOLOGIES / CREDITS */}
-            <Text style={[styles.sectionTitle, { color: colors.subtext }]}>TECNOLOGÍAS & CRÉDITOS</Text>
+            <Text style={[styles.sectionTitle, { color: colors.subtext }]}>{TEXTS.technologiesAndCredits}</Text>
 
             <View style={styles.techList}>
-              <TechItem name="React Native" role="Framework Core" colors={colors} />
-              <TechItem name="Expo" role="Ecosistema" colors={colors} />
-              <TechItem name="Expo Router" role="Navegación" colors={colors} />
-              <TechItem name="Lucide Icons" role="Iconografía" colors={colors} />
-              <TechItem name="AsyncStorage" role="Almacenamiento Seguro" colors={colors} />
+              <TechItem name="React Native" role={TEXTS.frameworkCore} colors={colors} />
+              <TechItem name="Expo" role={TEXTS.ecosystem} colors={colors} />
+              <TechItem name="Expo Router" role={TEXTS.navigation} colors={colors} />
+              <TechItem name="Lucide Icons" role={TEXTS.iconography} colors={colors} />
+              <TechItem name="AsyncStorage" role={TEXTS.secureStorage} colors={colors} />
             </View>
 
             <View style={styles.footer}>
               <Heart size={14} color="#ef4444" style={{ marginHorizontal: 4 }} />
               <Text style={{ color: colors.subtext, fontSize: 12 }}>
-                Creado con pasión por el Software Libre
+                {TEXTS.createdWithLove}
               </Text>
             </View>
 
           </ScrollView>
 
-          {/* Close button */}
-          <TouchableOpacity style={[styles.doneButton]} onPress={onClose}>
-            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Entendido</Text>
+          {/* CLOSE BUTTON */}
+          <TouchableOpacity style={[styles.doneButton, { backgroundColor: colors.buttonBg }]} onPress={onClose}>
+            <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 16 }}>{TEXTS.gotIt}</Text>
           </TouchableOpacity>
 
         </View>
@@ -87,7 +90,6 @@ export const AboutModal = ({ visible, onClose, colors }: AboutModalProps) => {
   );
 };
 
-// Subcomponente para items de tecnología
 const TechItem = ({ name, role, colors }: { name: string, role: string, colors: any }) => (
   <View style={[styles.techItem, { borderBottomColor: colors.headerBorder || '#eee' }]}>
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -102,13 +104,13 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end' // Bottom sheet style
+    justifyContent: 'flex-end'
   },
   modalContent: {
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
     padding: 24,
-    maxHeight: '85%', // Ocupa casi toda la pantalla pero no toda
+    maxHeight: '85%',
     paddingBottom: 40
   },
   header: {
@@ -127,13 +129,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20
   },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 15
+  appLogo: {
+    width: 120, 
+    height: 120,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#aaa',
+    marginBottom: 10,
   },
   appName: {
     fontSize: 24,
@@ -201,7 +203,6 @@ const styles = StyleSheet.create({
     opacity: 0.8
   },
   doneButton: {
-    backgroundColor: '#202122',
     padding: 15,
     borderRadius: 12,
     alignItems: 'center',

@@ -9,6 +9,7 @@ import { Linking, ScrollView, StatusBar, StyleSheet, Switch, Text, TouchableOpac
 import { getColors } from '../constants/Styles';
 import { getBiometricEnabled, setBiometricEnabled } from '../storage/secureStore';
 import { APP_NAME, APP_PRIVACY_POLICY_URL, APP_VERSION } from '@/constants/AppInformation';
+import { TEXTS } from '@/constants/Languages';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -50,18 +51,18 @@ export default function SettingsScreen() {
 
       <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: colors.headerBorder }]}>
         <TouchableOpacity onPress={router.back} style={{ padding: 5 }}><ArrowLeft color={colors.text} size={26} /></TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>Ajustes</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{TEXTS.settings}</Text>
         <View style={{ width: 26 }} />
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20 }}>
         {/* SECURITY */}
-        <Text style={[styles.sectionHeader, { color: colors.subtext }]}>SEGURIDAD</Text>
+        <Text style={[styles.sectionHeader, { color: colors.subtext }]}>{TEXTS.security}</Text>
         <View style={[styles.sectionContainer, { backgroundColor: colors.modalBg }]}>
           <SettingsOption
             icon={<Fingerprint color={colors.text} size={22} />}
-            title="Bloqueo Biométrico"
-            subtitle="FaceID / Huella al abrir"
+            title={TEXTS.biometricBlockTitle}
+            subtitle={TEXTS.biometricBlockSubtitle}
             onPress={() => toggleBiometric(!biometric)}
             isLast colors={colors}
             rightIcon={<Switch value={biometric} onValueChange={toggleBiometric} trackColor={{ false: "#767577", true: colors.tint }} />}
@@ -71,18 +72,18 @@ export default function SettingsScreen() {
         <View style={{ height: 30 }} />
 
         {/* KEYS MANAGEMENT */}
-        <Text style={[styles.sectionHeader, { color: colors.subtext }]}>GESTIÓN DE CLAVES</Text>
+        <Text style={[styles.sectionHeader, { color: colors.subtext }]}>{TEXTS.keysManagement}</Text>
         <View style={[styles.sectionContainer, { backgroundColor: colors.modalBg }]}>
           <SettingsOption
             icon={<Download color={colors.text} size={22} />}
-            title="Exportar Claves"
+            title={TEXTS.exportKeys}
             onPress={handleExport}
             colors={colors}
             rightIcon={<ChevronRight size={20} color={colors.subtext} opacity={0.5} />}
           />
           <SettingsOption
             icon={<Upload color={colors.text} size={22} />}
-            title="Importar Claves"
+            title={TEXTS.importKeys}
             onPress={handleImport}
             isLast colors={colors}
             rightIcon={<ChevronRight size={20} color={colors.subtext} opacity={0.5} />}
@@ -92,17 +93,17 @@ export default function SettingsScreen() {
         <View style={{ height: 30 }} />
 
         {/* APP INFORMATION */}
-        <Text style={[styles.sectionHeader, { color: colors.subtext }]}>APLICACIÓN</Text>
+        <Text style={[styles.sectionHeader, { color: colors.subtext }]}>{TEXTS.app}</Text>
         <View style={[styles.sectionContainer, { backgroundColor: colors.modalBg }]}>
           <SettingsOption
             icon={<Shield color={colors.text} size={22} />}
-            title="Política de Privacidad"
+            title={TEXTS.privacyPolicy}
             onPress={() => Linking.openURL(APP_PRIVACY_POLICY_URL)}
             colors={colors}
           />
           <SettingsOption
             icon={<Info color={colors.text} size={22} />}
-            title="Acerca de"
+            title={TEXTS.about}
             onPress={() => setAboutVisible(true)}
             isLast
             colors={colors}
