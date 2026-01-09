@@ -17,10 +17,6 @@ import { TEXTS } from '@/constants/Languages';
 
 global.Buffer = Buffer;
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const colors = getColors(colorScheme);
@@ -102,7 +98,6 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="index" />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           <Stack.Screen name="add-account" options={{ presentation: 'modal' }} />
           <Stack.Screen name="add-folder" options={{ presentation: 'modal' }} />
           <Stack.Screen name="folder/[id]" />
