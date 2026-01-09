@@ -6,8 +6,8 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, ChevronRight, Download, Fingerprint, Info, Shield, Upload } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Linking, ScrollView, StatusBar, StyleSheet, Switch, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
-import { getColors } from '../constants/Styles';
-import { getBiometricEnabled, setBiometricEnabled } from '../storage/secureStore';
+import { getColors } from '@/constants/Styles';
+import { getBiometricEnabled, setBiometricEnabled } from '@/storage/secureStore';
 import { APP_NAME, APP_PRIVACY_POLICY_URL, APP_VERSION } from '@/constants/AppInformation';
 import { TEXTS } from '@/constants/Languages';
 

@@ -1,22 +1,15 @@
-import * as Sharing from "expo-sharing";
-import * as FileSystem from "expo-file-system/legacy";
-import * as DocumentPicker from "expo-document-picker";
-import { Platform } from "react-native";
-import { loadAuthData, saveAuthData } from "../storage/secureStore";
 import { APP_NAME, APP_VERSION } from "@/constants/AppInformation";
+import { loadAuthData, saveAuthData } from "@/storage/secureStore";
+import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from "expo-file-system/legacy";
+import * as Sharing from "expo-sharing";
+import { Platform } from "react-native";
 
 const { StorageAccessFramework } = FileSystem;
 
-type ExportError =
-  | "NO_DATA"
-  | "CANCELLED"
-  | "SHARING_UNAVAILABLE"
-  | "UNKNOWN";
+type ExportError = "NO_DATA" | "CANCELLED" | "SHARING_UNAVAILABLE" | "UNKNOWN";
 
-type ImportError =
-  | "CANCELLED"
-  | "INVALID_FORMAT"
-  | "UNKNOWN";
+type ImportError = "CANCELLED" | "INVALID_FORMAT" | "UNKNOWN";
 
 export const BackupService = {
   exportData: async (): Promise<{ success: boolean; error?: ExportError }> => {

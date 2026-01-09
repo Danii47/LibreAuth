@@ -1,5 +1,5 @@
+import { AuthData } from "@/types";
 import * as SecureStore from "expo-secure-store";
-import { AuthData } from "../types";
 
 const STORAGE_KEY = "libreauth_secure_data";
 
@@ -19,7 +19,7 @@ export const loadAuthData = async (): Promise<AuthData> => {
     if (jsonValue) {
       return JSON.parse(jsonValue);
     }
-    
+
     // if no data found, return empty structure
     return { accounts: [], folders: [] };
   } catch (e) {

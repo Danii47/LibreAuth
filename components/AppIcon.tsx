@@ -1,4 +1,4 @@
-import { ICON_MAP } from '../constants/Icons';
+import { ICON_MAP } from '@/constants/Icons';
 import { Key } from 'lucide-react-native';
 
 interface Props {

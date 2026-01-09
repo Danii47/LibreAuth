@@ -1,7 +1,7 @@
-import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { Folder as FolderIcon, Home, ArrowRight } from 'lucide-react-native';
-import { Folder } from '../types';
-import { TEXTS } from '../constants/Languages';
+import { TEXTS } from '@/constants/Languages';
+import { Folder } from '@/types';
+import { ArrowRight, Folder as FolderIcon, Home } from 'lucide-react-native';
+import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface MoveToFolderModalProps {
   visible: boolean;

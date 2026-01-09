@@ -1,12 +1,12 @@
+import { TEXTS } from '@/constants/Languages';
+import { getColors } from '@/constants/Styles';
+import { Account } from '@/types';
+import { generateTOTP } from '@/utils/totp';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { CheckCircle, Circle, GripVertical } from 'lucide-react-native';
-import { useEffect, useRef, useState, memo } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { Animated, Platform, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
-import { TEXTS } from '../constants/Languages';
-import { getColors } from '../constants/Styles';
-import { Account } from '../types';
-import { generateTOTP } from '../utils/totp';
 import { AppIcon } from './AppIcon';
 import { CircularTimer } from './CircularTimer';
 

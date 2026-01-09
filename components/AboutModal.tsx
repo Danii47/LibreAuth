@@ -38,7 +38,7 @@ export const AboutModal = ({ visible, onClose, colors }: AboutModalProps) => {
             {/* LOGO AND VERSION */}
             <View style={styles.logoSection}>
               <Image
-                source={require('../assets/images/icon.png')}
+                source={require('@/assets/images/icon.png')}
                 style={styles.appLogo}
               />
               <Text style={[styles.appName, { color: colors.text }]}>{APP_NAME}</Text>

@@ -2,11 +2,11 @@ import { StyleSheet, Text, View, FlatList, TouchableOpacity, useColorScheme, Sta
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useState, useCallback } from 'react';
 import { Plus, Trash2, ArrowLeft, X, FolderOpen } from 'lucide-react-native';
-import { TotpCard } from '../../components/TotpCard';
-import { loadAuthData, saveAuthData } from '../../storage/secureStore';
-import { Account, Folder } from '../../types';
-import { TEXTS } from '../../constants/Languages';
-import { getColors } from '../../constants/Styles';
+import { TotpCard } from '@/components/TotpCard';
+import { loadAuthData, saveAuthData } from '@/storage/secureStore';
+import { Account, Folder } from '@/types';
+import { TEXTS } from '@/constants/Languages';
+import { getColors } from '@/constants/Styles';
 import { DeleteModal } from '@/components/DeleteModal';
 import { AddOptionsModal } from '@/components/AddOptionsModal';
 import { MoveToFolderModal } from '@/components/MoveToFolderModal';

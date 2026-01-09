@@ -10,8 +10,8 @@ import { AppState, View, Text, TouchableOpacity, StyleSheet } from 'react-native
 import { Fingerprint, Lock, KeyRound } from 'lucide-react-native';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { getColors } from '../constants/Styles';
-import { getBiometricEnabled } from '../storage/secureStore';
+import { getColors } from '@/constants/Styles';
+import { getBiometricEnabled } from '@/storage/secureStore';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { TEXTS } from '@/constants/Languages';
 
@@ -101,7 +101,7 @@ export default function RootLayout() {
             animation: 'default',
           }}
         >
-          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="index" />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           <Stack.Screen name="add-account" options={{ presentation: 'modal' }} />
           <Stack.Screen name="add-folder" options={{ presentation: 'modal' }} />

@@ -11,11 +11,11 @@ import {
   useColorScheme,
   View
 } from 'react-native';
-import { ACCOUNT_COLORS } from '../constants/Colors';
-import { TEXTS } from '../constants/Languages';
-import { getColors } from '../constants/Styles';
-import { loadAuthData, saveAuthData } from '../storage/secureStore';
-import { Folder } from '../types';
+import { ACCOUNT_COLORS } from '@/constants/Colors';
+import { TEXTS } from '@/constants/Languages';
+import { getColors } from '@/constants/Styles';
+import { loadAuthData, saveAuthData } from '@/storage/secureStore';
+import { Folder } from '@/types';
 import { ColorPicker } from '@/components/ui/ColorPicker';
 import { IconPicker } from '@/components/ui/IconPicker';
 

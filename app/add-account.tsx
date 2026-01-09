@@ -2,11 +2,11 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Save, Eye, EyeOff, FolderOpen } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View, useColorScheme } from 'react-native';
-import { ACCOUNT_COLORS } from '../constants/Colors';
-import { TEXTS } from '../constants/Languages';
-import { getColors } from '../constants/Styles';
-import { loadAuthData, saveAuthData } from '../storage/secureStore';
-import { Account, Folder } from '../types';
+import { ACCOUNT_COLORS } from '@/constants/Colors';
+import { TEXTS } from '@/constants/Languages';
+import { getColors } from '@/constants/Styles';
+import { loadAuthData, saveAuthData } from '@/storage/secureStore';
+import { Account, Folder } from '@/types';
 import { ColorPicker } from '@/components/ui/ColorPicker';
 import { IconPicker } from '@/components/ui/IconPicker';
 

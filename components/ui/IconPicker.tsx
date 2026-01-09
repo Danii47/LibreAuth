@@ -1,7 +1,7 @@
-import { ScrollView, TouchableOpacity, StyleSheet, View, Animated } from 'react-native';
-import { AppIcon } from '../AppIcon';
+import { AppIcon } from '@/components/AppIcon';
 import { AVAILABLE_ICONS } from '@/constants/Icons';
 import { useRef, useState } from 'react';
+import { Animated, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface Props {
   selectedIcon: string;

@@ -5,8 +5,8 @@ import { useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View, StatusBar, useColorScheme } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { useAnimatedProps, useSharedValue } from 'react-native-reanimated';
-import { extractOTPParams } from '../utils/totp';
-import { getColors } from '../constants/Styles';
+import { extractOTPParams } from '@/utils/totp';
+import { getColors } from '@/constants/Styles';
 import { TEXTS } from '@/constants/Languages';
 
 const AnimatedCamera = Animated.createAnimatedComponent(CameraView);

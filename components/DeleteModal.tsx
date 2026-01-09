@@ -1,6 +1,6 @@
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { TEXTS } from '@/constants/Languages';
 import { AlertTriangle } from 'lucide-react-native';
-import { TEXTS } from '../constants/Languages';
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface DeleteModalProps {
   visible: boolean;

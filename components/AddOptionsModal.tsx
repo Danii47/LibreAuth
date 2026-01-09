@@ -1,6 +1,6 @@
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { QrCode, Keyboard, FolderPlus } from 'lucide-react-native';
-import { TEXTS } from '../constants/Languages';
+import { TEXTS } from '@/constants/Languages';
 
 interface AddOptionsModalProps {
   visible: boolean;
