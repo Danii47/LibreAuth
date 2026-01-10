@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Plus, Trash2, FolderOpen, X, Settings, Pencil } from 'lucide-react-native';
+import { Plus, Trash2, FolderOpen, X, Settings, Pencil, Search } from 'lucide-react-native';
 import { TEXTS } from '@/constants/Languages';
 
 interface HomeHeaderProps {
@@ -11,6 +11,7 @@ interface HomeHeaderProps {
   onSettings: () => void;
   onAdd: () => void;
   onEdit: () => void;
+  onSearch: () => void;
   colors: any;
 }
 
@@ -23,6 +24,7 @@ export const HomeHeader = ({
   onSettings,
   onAdd,
   onEdit,
+  onSearch,
   colors
 }: HomeHeaderProps) => {
   return (
@@ -68,13 +70,17 @@ export const HomeHeader = ({
             <TouchableOpacity onPress={onSettings} style={styles.iconButton}>
               <Settings color={colors.text} size={26} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.addButton} onPress={onAdd}>
+            <TouchableOpacity onPress={onSearch} style={styles.iconButton}>
+              <Search color={colors.text} size={26} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={onAdd} style={styles.addButton}>
               <Plus color="white" size={24} />
             </TouchableOpacity>
           </View>
         </View>
-      )}
-    </View>
+      )
+      }
+    </View >
   );
 };
 
