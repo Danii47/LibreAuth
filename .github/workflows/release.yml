@@ -1,0 +1,65 @@
+name: Build & Release (APK + AAB)
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-android:
+    name: Build Android App
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 🏗 Setup repo
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: 🏗 Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔧 Install EAS CLI
+        run: npm install -g eas-cli
+
+      - name: 📱 Build APK (vX.X.X.apk)
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          eas build --platform android \
+            --profile preview \
+            --non-interactive \
+            --local \
+            --output="LibreAuth-${{ github.ref_name }}.apk"
+
+      - name: 📱 Build AAB (vX.X.X.aab)
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          eas build --platform android \
+            --profile production \
+            --non-interactive \
+            --local \
+            --output="LibreAuth-${{ github.ref_name }}.aab"
+
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            LibreAuth-${{ github.ref_name }}.apk
+            LibreAuth-${{ github.ref_name }}.aab
+          generate_release_notes: true
+          draft: false
+          prerelease: false
