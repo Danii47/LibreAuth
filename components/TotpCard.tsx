@@ -4,7 +4,7 @@ import { Account } from '@/types';
 import { generateTOTP } from '@/utils/totp';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
-import { CheckCircle, Circle, GripVertical } from 'lucide-react-native';
+import { CheckCircle, Circle, GripVertical, ChevronsRight } from 'lucide-react-native';
 import { memo, useEffect, useRef, useState } from 'react';
 import { Animated, Platform, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { AppIcon } from './AppIcon';
@@ -24,10 +24,10 @@ export const TotpCard = memo(({ account, onPress, onLongPress, selectionMode, is
 
   const scheme = useColorScheme();
   const colors = getColors(scheme);
-  const [code, setCode] = useState("000000");
+  const [codes, setCodes] = useState({ actualCode: "000000", nextCode: "000000" });
   const [progress, setProgress] = useState(1);
   const [isRevealed, setIsRevealed] = useState(false);
-  const lastCode = useRef("");
+  const lastCodes = useRef({ actualCode: "", nextCode: "" });
   const revealTimeout = useRef<number | null>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -37,10 +37,12 @@ export const TotpCard = memo(({ account, onPress, onLongPress, selectionMode, is
       const now = Date.now();
       const remainingMs = 30000 - (now % 30000);
       setProgress(remainingMs / 30000);
-      const newCode = generateTOTP(account.secret);
-      if (newCode !== lastCode.current) {
-        setCode(newCode);
-        lastCode.current = newCode;
+
+      const newCodes = generateTOTP(account.secret);
+
+      if (newCodes.actualCode !== lastCodes.current.actualCode) {
+        setCodes(newCodes);
+        lastCodes.current = newCodes;
       }
       animationFrameId = requestAnimationFrame(animate);
     };
@@ -65,7 +67,7 @@ export const TotpCard = memo(({ account, onPress, onLongPress, selectionMode, is
       onPress(account);
       Haptics.selectionAsync();
     } else {
-      await Clipboard.setStringAsync(code);
+      await Clipboard.setStringAsync(codes.actualCode);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       if (isRevealed) {
@@ -97,7 +99,13 @@ export const TotpCard = memo(({ account, onPress, onLongPress, selectionMode, is
     paddingLeft: basePadH
   };
 
-  const codeDisplay = isRevealed ? `${code.slice(0, 3)} ${code.slice(3)}` : "••• •••";
+  const codeDisplay = isRevealed
+    ? `${codes.actualCode.slice(0, 3)} ${codes.actualCode.slice(3)}`
+    : "••• •••";
+
+  const nextCodeDisplay = isRevealed
+    ? `${codes.nextCode.slice(0, 3)} ${codes.nextCode.slice(3)}`
+    : "••• •••";
 
   return (
     <TouchableOpacity
@@ -147,11 +155,30 @@ export const TotpCard = memo(({ account, onPress, onLongPress, selectionMode, is
             </View>
           ) : (
             <>
-              <Animated.View style={{ opacity: fadeAnim }}>
+              <Animated.View style={{ opacity: fadeAnim, alignItems: 'flex-end', marginRight: 8 }}>
                 <Text style={[styles.code, { color: cardColor }, !isRevealed && styles.hiddenCode]}>
                   {codeDisplay}
                 </Text>
+
+                <View style={styles.nextCodeWrapper}>
+                  
+                  <ChevronsRight
+                    size={14}
+                    color={cardColor}
+                    style={{ opacity: 0.65, marginRight: 1 }}
+                    strokeWidth={2.5}
+                  />
+                  
+                  <Text style={[
+                    styles.nextCode,
+                    { color: cardColor },
+                    !isRevealed && styles.hiddenNextCode
+                  ]}>
+                    {nextCodeDisplay}
+                  </Text>
+                </View>
               </Animated.View>
+
               <View style={styles.timerWrapper}>
                 <CircularTimer size={26} progress={progress} color={cardColor} />
               </View>
@@ -186,7 +213,13 @@ const styles = StyleSheet.create({
   issuer: { fontSize: 12, fontWeight: '600', marginBottom: 1 },
   name: { fontSize: 16, fontWeight: 'bold' },
   rightSide: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end' },
-  code: { fontSize: 20, fontWeight: 'bold', fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', marginRight: 8 },
-  hiddenCode: { fontSize: 24, letterSpacing: -2, opacity: 0.6 },
+
+  code: { fontSize: 22, fontWeight: 'bold', fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
+  hiddenCode: { opacity: 0.6 },
+
+  nextCodeWrapper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginTop: 1 },
+  nextCode: { fontSize: 13, fontWeight: '500', fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', opacity: 0.5 },
+  hiddenNextCode: { opacity: 0.3 },
+
   timerWrapper: { justifyContent: 'center', alignItems: 'center' }
 });

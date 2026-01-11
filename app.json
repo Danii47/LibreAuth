@@ -21,7 +21,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0a1b34",
-        "foregroundImage": "./assets/images/adaptative-icon.png"
+        "foregroundImage": "./assets/images/adaptive-icon.png"
       },
       "package": "com.dani47.libreauth",
       "permissions": [
