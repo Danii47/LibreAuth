@@ -1,5 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Plus, Trash2, FolderOpen, X, Settings, Pencil, Search } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
+import { Plus, Trash2, FolderOpen, X, Settings, Pencil, Search, ArrowLeft } from 'lucide-react-native';
 import { TEXTS } from '@/constants/Languages';
 
 interface HomeHeaderProps {
@@ -12,6 +12,13 @@ interface HomeHeaderProps {
   onAdd: () => void;
   onEdit: () => void;
   onSearch: () => void;
+
+  // Nuevas props para el buscador
+  isSearching: boolean;
+  searchQuery: string;
+  onSearchChange: (text: string) => void;
+  onCancelSearch: () => void;
+
   colors: any;
 }
 
@@ -25,6 +32,10 @@ export const HomeHeader = ({
   onAdd,
   onEdit,
   onSearch,
+  isSearching,
+  searchQuery,
+  onSearchChange,
+  onCancelSearch,
   colors
 }: HomeHeaderProps) => {
   return (
@@ -42,15 +53,12 @@ export const HomeHeader = ({
           </View>
 
           <View style={styles.rightActions}>
-
-            {/* EDIT BUTTON */}
             {selectedCount === 1 && (
               <TouchableOpacity onPress={onEdit} style={styles.iconButton}>
                 <Pencil color={colors.text} size={24} />
               </TouchableOpacity>
             )}
 
-            {/* MOVE AND DELETE BUTTONS */}
             {selectedCount > 0 && (
               <>
                 <TouchableOpacity onPress={onMove} style={styles.iconButton}>
@@ -62,6 +70,33 @@ export const HomeHeader = ({
               </>
             )}
           </View>
+        </View>
+      ) : isSearching ? (
+        <View style={styles.searchRow}>
+          <TouchableOpacity onPress={onCancelSearch} style={styles.iconButton}>
+            <ArrowLeft color={colors.text} size={26} />
+          </TouchableOpacity>
+
+          <TextInput
+            style={[
+              styles.searchInput,
+              {
+                color: colors.text,
+                backgroundColor: colors.card || '#f2f2f2'
+              }
+            ]}
+            placeholder="Buscar..."
+            placeholderTextColor={colors.subtext}
+            value={searchQuery}
+            onChangeText={onSearchChange}
+            autoFocus
+          />
+
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => onSearchChange('')} style={styles.iconButton}>
+              <X color={colors.subtext} size={20} />
+            </TouchableOpacity>
+          )}
         </View>
       ) : (
         <View style={styles.normalRow}>
@@ -78,9 +113,8 @@ export const HomeHeader = ({
             </TouchableOpacity>
           </View>
         </View>
-      )
-      }
-    </View >
+      )}
+    </View>
   );
 };
 
@@ -97,6 +131,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    height: 44,
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    fontSize: 16
   },
   leftActions: {
     flexDirection: 'row',

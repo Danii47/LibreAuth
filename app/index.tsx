@@ -1,6 +1,6 @@
 import { StyleSheet, View, Text, StatusBar, useColorScheme, Alert } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import DraggableFlatList, { ScaleDecorator, RenderItemParams } from 'react-native-draggable-flatlist';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -31,6 +31,9 @@ export default function HomeScreen() {
 
   const [modals, setModals] = useState({ add: false, move: false, delete: false });
 
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
   const { selectedIds, selectionMode, toggleSelection, clearSelection, startSelection } = useSelection();
 
   const loadData = useCallback(async () => {
@@ -60,9 +63,29 @@ export default function HomeScreen() {
     }, [loadData, clearSelection])
   );
 
+  const filteredData = useMemo(() => {
+    if (!isSearching || !searchQuery.trim()) {
+      return data;
+    }
+
+    const query = searchQuery.toLowerCase();
+
+    return data.filter((item: Account | Folder) => {
+      if (isFolder(item)) {
+        return item.name.toLowerCase().includes(query);
+      } else {
+        const nameMatch = (item as Account).name.toLowerCase().includes(query);
+        const issuerMatch = (item as Account).issuer?.toLowerCase().includes(query);
+        return nameMatch || issuerMatch;
+      }
+    });
+  }, [data, isSearching, searchQuery]);
+
   const toggleModal = (key: keyof typeof modals, val: boolean) => setModals(prev => ({ ...prev, [key]: val }));
 
   const onDragEnd = async ({ data: newData }: { data: ListItem[] }) => {
+    if (isSearching) return;
+
     const updatedData = newData.map((item, index) => ({
       ...item,
       position: index
@@ -96,9 +119,11 @@ export default function HomeScreen() {
   }, [selectionMode, router, toggleSelection]);
 
   const handleLongPress = useCallback((item: ListItem) => {
+    if (isSearching) return;
+
     if (!selectionMode) startSelection(item.id);
     else toggleSelection(item.id);
-  }, [selectionMode, startSelection, toggleSelection]);
+  }, [selectionMode, startSelection, toggleSelection, isSearching]);
 
   const handleBatchDelete = async () => {
     const data = await loadAuthData();
@@ -127,8 +152,14 @@ export default function HomeScreen() {
 
   const renderItem = useCallback(({ item, drag, isActive }: RenderItemParams<ListItem>) => {
     const isSel = selectedIds.includes(item.id);
+
+    const dragEnabled = !isSearching;
+
     const props = {
-      selectionMode, isSelected: isSel, drag, isActive,
+      selectionMode,
+      isSelected: isSel,
+      drag: dragEnabled ? drag : undefined,
+      isActive,
       onPress: () => handlePress(item),
       onLongPress: () => handleLongPress(item)
     };
@@ -138,7 +169,7 @@ export default function HomeScreen() {
         {isFolder(item) ? <FolderCard folder={item} {...props} /> : <TotpCard account={item} {...props} />}
       </ScaleDecorator>
     );
-  }, [selectionMode, selectedIds, handlePress, handleLongPress]);
+  }, [selectionMode, selectedIds, handlePress, handleLongPress, isSearching]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -154,21 +185,36 @@ export default function HomeScreen() {
           onSettings={() => router.push('/settings')}
           onAdd={() => toggleModal('add', true)}
           onEdit={() => Alert.alert("No implementado", "La edición de carpetas y cuentas aún no está implementada.")}
+
+          onSearch={() => setIsSearching(true)}
+          isSearching={isSearching}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onCancelSearch={() => {
+            setIsSearching(false);
+            setSearchQuery('');
+          }}
+
           colors={colors}
         />
 
         <DraggableFlatList
-          data={data}
+          data={filteredData}
           onDragEnd={onDragEnd}
           keyExtractor={item => item.id}
           renderItem={renderItem}
           contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
           activationDistance={20}
+          dragItemOverflow={true}
           ListEmptyComponent={
             !loading ? (
               <View style={styles.emptyState}>
-                <Text style={[styles.emptyText, { color: colors.text }]}>{TEXTS.empty}</Text>
-                <Text style={[styles.emptySubtext, { color: colors.subtext }]}>{TEXTS.pressToStart}</Text>
+                <Text style={[styles.emptyText, { color: colors.text }]}>
+                  {isSearching ? 'No hay resultados' : TEXTS.empty}
+                </Text>
+                <Text style={[styles.emptySubtext, { color: colors.subtext }]}>
+                  {isSearching ? 'Prueba con otro término' : TEXTS.pressToStart}
+                </Text>
               </View>
             ) : null
           }
