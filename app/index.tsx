@@ -210,10 +210,10 @@ export default function HomeScreen() {
             !loading ? (
               <View style={styles.emptyState}>
                 <Text style={[styles.emptyText, { color: colors.text }]}>
-                  {isSearching ? 'No hay resultados' : TEXTS.empty}
+                  {isSearching ? TEXTS.noResults : TEXTS.empty}
                 </Text>
                 <Text style={[styles.emptySubtext, { color: colors.subtext }]}>
-                  {isSearching ? 'Prueba con otro término' : TEXTS.pressToStart}
+                  {isSearching ? TEXTS.tryAnotherSearch : TEXTS.pressToStart}
                 </Text>
               </View>
             ) : null
