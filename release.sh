@@ -61,6 +61,10 @@ git push origin "v$NEW_VERSION"
 print_step "Returning to development branch..."
 git checkout dev
 
+print_step "Merging main into dev..."
+git merge main
+git push origin dev
+
 echo ""
 echo "🎉 Release v$NEW_VERSION completed successfully!"
 echo "The GitHub Actions workflow should start shortly."
