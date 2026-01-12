@@ -1,6 +1,6 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Save } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView, Platform,
@@ -24,10 +24,22 @@ export default function AddFolderScreen() {
   const scheme = useColorScheme();
   const colors = getColors(scheme);
 
+  const { id, name: initialName, icon: initialIcon, color: initialColor } = useLocalSearchParams();
+  const getParam = (p: any) => (Array.isArray(p) ? p[0] : p) || '';
+
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState(ACCOUNT_COLORS[0]);
   const [selectedIcon, setSelectedIcon] = useState('folder');
   const [loading, setLoading] = useState(false);
+  const isEditing = Boolean(id);
+
+  useEffect(() => {
+    if (id) {
+      setName(getParam(initialName));
+      setSelectedColor(getParam(initialColor) || ACCOUNT_COLORS[0]);
+      setSelectedIcon(getParam(initialIcon) || 'folder');
+    }
+  }, [id, initialName, initialColor, initialIcon]);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -39,28 +51,42 @@ export default function AddFolderScreen() {
 
     try {
       const data = await loadAuthData();
+      const folderId = getParam(id);
 
-      const rootAccounts = data.accounts.filter(acc => !acc.folderId);
-      const siblings = [...data.folders, ...rootAccounts];
+      if (folderId) {
+        // Edit logic
+        const index = data.folders.findIndex(f => f.id === folderId);
+        if (index !== -1) {
+          data.folders[index] = {
+            ...data.folders[index],
+            name: name.trim(),
+            color: selectedColor,
+            icon: selectedIcon
+          };
+        }
+      } else {
+        // Create logic
+        const rootAccounts = data.accounts.filter(acc => !acc.folderId);
+        const siblings = [...data.folders, ...rootAccounts];
+        const maxPos = siblings.reduce((max, item) => Math.max(max, item.position || -1), -1);
 
-      const maxPos = siblings.reduce((max, item) => Math.max(max, item.position || -1), -1);
+        const newFolder: Folder = {
+          id: Date.now().toString(),
+          name: name.trim(),
+          color: selectedColor,
+          icon: selectedIcon,
+          position: maxPos + 1,
+          createdAt: Date.now(),
+        };
+        data.folders.push(newFolder);
+      }
 
-      const newFolder: Folder = {
-        id: Date.now().toString(),
-        name: name.trim(),
-        color: selectedColor,
-        icon: selectedIcon,
-        position: maxPos + 1,
-        createdAt: Date.now(),
-      };
-
-      data.folders.push(newFolder);
       await saveAuthData(data);
       router.back();
 
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'No se pudo guardar la carpeta.');
+      Alert.alert('Error', TEXTS.cannotSaveFolder);
     } finally {
       setLoading(false);
     }
@@ -80,7 +106,9 @@ export default function AddFolderScreen() {
           <TouchableOpacity onPress={router.back} style={styles.backBtn}>
             <ArrowLeft size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>{TEXTS.newFolder}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>
+            {isEditing ? TEXTS.editFolder : TEXTS.newFolder}
+          </Text>
         </View>
 
         <View style={styles.form}>
@@ -119,9 +147,13 @@ export default function AddFolderScreen() {
             disabled={loading}
           >
             <Save size={20} color="white" />
-            <Text style={styles.saveText}>{loading ? TEXTS.saving : TEXTS.newFolder}</Text>
+            <Text style={styles.saveText}>
+              {loading
+                ? TEXTS.saving
+                : (isEditing ? TEXTS.confirmEdit : TEXTS.newFolder)
+              }
+            </Text>
           </TouchableOpacity>
-
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

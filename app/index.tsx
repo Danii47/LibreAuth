@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, StatusBar, useColorScheme, Alert } from 'react-native';
+import { StyleSheet, View, Text, StatusBar, useColorScheme } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useState, useCallback, useMemo } from 'react';
 import DraggableFlatList, { ScaleDecorator, RenderItemParams } from 'react-native-draggable-flatlist';
@@ -110,6 +110,42 @@ export default function HomeScreen() {
     await saveAuthData({ folders: updatedFolders, accounts: updatedAccounts });
   };
 
+  const handleEdit = () => {
+    if (selectedIds.length !== 1) return;
+
+    const itemId = selectedIds[0];
+    const item = data.find(item => item.id === itemId);
+
+    if (!item) return;
+
+    if (isFolder(item)) {
+      router.push({
+        pathname: '/add-folder',
+        params: {
+          id: item.id,
+          name: item.name,
+          icon: item.icon,
+          color: item.color
+        }
+      });
+    } else {
+      const acc = item as Account;
+      router.push({
+        pathname: '/add-account',
+        params: {
+          id: acc.id,
+          name: acc.name,
+          issuer: acc.issuer,
+          secret: acc.secret,
+          icon: acc.icon,
+          color: acc.color,
+          folderId: acc.folderId
+        }
+      });
+    }
+    clearSelection();
+  };
+
   const handlePress = useCallback((item: ListItem) => {
     if (selectionMode) {
       toggleSelection(item.id);
@@ -184,7 +220,7 @@ export default function HomeScreen() {
           onDelete={() => toggleModal('delete', true)}
           onSettings={() => router.push('/settings')}
           onAdd={() => toggleModal('add', true)}
-          onEdit={() => Alert.alert("No implementado", "La edición de carpetas y cuentas aún no está implementada.")}
+          onEdit={handleEdit}
 
           onSearch={() => setIsSearching(true)}
           isSearching={isSearching}
