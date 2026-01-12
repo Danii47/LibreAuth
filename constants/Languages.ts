@@ -92,6 +92,12 @@ const ALL_TEXTS: { [key: string]: { [key: string]: string } } = {
     folderNamePlace: "Ex: Work, Personal...",
     selectDestination: "Select destination for",
     selectDestination2: "account(s)",
+    noResults: "No results found.",
+    tryAnotherSearch: "Try another search term.",
+    editFolder: "Edit folder",
+    editAccount: "Edit account",
+    confirmEdit: "Confirm edit",
+    couldNotSaveFolder: "Could not save folder.",
   },
   es: {
     // Spanish
@@ -181,6 +187,12 @@ const ALL_TEXTS: { [key: string]: { [key: string]: string } } = {
     folderNamePlace: "Ej: Trabajo, Personal...",
     selectDestination: "Selecciona el destino para",
     selectDestination2: "cuenta(s)",
+    noResults: "No se encontraron resultados.",
+    tryAnotherSearch: "Intenta con otro término de búsqueda.",
+    editFolder: "Editar carpeta",
+    editAccount: "Editar cuenta",
+    confirmEdit: "Confirmar edición",
+    couldNotSaveFolder: "No se pudo guardar la carpeta.",
   },
   fr: {
     // French
@@ -271,6 +283,12 @@ const ALL_TEXTS: { [key: string]: { [key: string]: string } } = {
     folderNamePlace: "Ex : Travail, Personnel...",
     selectDestination: "Sélectionnez la destination pour",
     selectDestination2: "compte(s)",
+    noResults: "Aucun résultat trouvé.",
+    tryAnotherSearch: "Essayez un autre terme de recherche.",
+    editFolder: "Modifier le dossier",
+    editAccount: "Modifier le compte",
+    confirmEdit: "Confirmer la modification",
+    couldNotSaveFolder: "Impossible d'enregistrer le dossier.",
   },
   de: {
     // German
@@ -362,6 +380,12 @@ const ALL_TEXTS: { [key: string]: { [key: string]: string } } = {
     folderNamePlace: "Bsp.: Arbeit, Privat...",
     selectDestination: "Ziel auswählen für",
     selectDestination2: "Konto/Konten",
+    noResults: "Keine Ergebnisse gefunden.",
+    tryAnotherSearch: "Versuchen Sie einen anderen Suchbegriff.",
+    editFolder: "Ordner bearbeiten",
+    editAccount: "Konto bearbeiten",
+    confirmEdit: "Bearbeitung bestätigen",
+    couldNotSaveFolder: "Ordner konnte nicht gespeichert werden.",
   },
   it: {
     // Italian
@@ -451,6 +475,12 @@ const ALL_TEXTS: { [key: string]: { [key: string]: string } } = {
     folderNamePlace: "Es: Lavoro, Personale...",
     selectDestination: "Seleziona destinazione per",
     selectDestination2: "account",
+    noResults: "Nessun risultato trovato.",
+    tryAnotherSearch: "Prova un altro termine di ricerca.",
+    editFolder: "Modifica cartella",
+    editAccount: "Modifica account",
+    confirmEdit: "Conferma modifica",
+    couldNotSaveFolder: "Impossibile salvare la cartella.",
   },
 };
 

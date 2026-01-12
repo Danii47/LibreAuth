@@ -12,30 +12,33 @@ import { IconPicker } from '@/components/ui/IconPicker';
 
 export default function AddAccountScreen() {
   const router = useRouter();
-  const colors = getColors(useColorScheme());
-  const { initialFolderId, scannedSecret, scannedIssuer, scannedName } = useLocalSearchParams();
-
+  const scheme = useColorScheme();
+  const colors = getColors(scheme);
+  
+  const { initialFolderId, scannedSecret, scannedIssuer, scannedName, id, name, issuer, secret, icon, color, folderId } = useLocalSearchParams();
+  
   const getParam = (p: any) => (Array.isArray(p) ? p[0] : p) || '';
 
   const [form, setForm] = useState({
-    name: getParam(scannedName),
-    issuer: getParam(scannedIssuer),
-    secret: getParam(scannedSecret),
-    color: ACCOUNT_COLORS[0],
-    icon: 'default',
-    folderId: undefined as string | undefined
+    name: getParam(name) || getParam(scannedName),
+    issuer: getParam(issuer) || getParam(scannedIssuer),
+    secret: getParam(secret) || getParam(scannedSecret),
+    color: getParam(color) || ACCOUNT_COLORS[0],
+    icon: getParam(icon) || 'default',
+    folderId: (getParam(folderId) || (Array.isArray(initialFolderId) ? initialFolderId[0] : initialFolderId)) as string | undefined
   });
 
   const [folders, setFolders] = useState<Folder[]>([]);
   const [showSecret, setShowSecret] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const isEditing = Boolean(id);
+
   useEffect(() => {
     loadAuthData().then(d => {
       if (d.folders?.length) setFolders(d.folders);
-      if (initialFolderId) setForm(f => ({ ...f, folderId: Array.isArray(initialFolderId) ? initialFolderId[0] : initialFolderId }));
     });
-  }, [initialFolderId]);
+  }, []);
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.secret.trim()) return Alert.alert(TEXTS.errorTitle, TEXTS.errorMissing);
@@ -45,27 +48,45 @@ export default function AddAccountScreen() {
     setLoading(true);
     try {
       const data = await loadAuthData();
+      const accountId = getParam(id);
 
-      let siblings = form.folderId
-        ? data.accounts.filter(a => a.folderId === form.folderId)
-        : [...data.folders, ...data.accounts.filter(a => !a.folderId)];
-      
-      const maxPos = siblings.reduce((max, item) => Math.max(max, item.position || -1), -1);
+      if (accountId) {
+        // Edit logic
+        const index = data.accounts.findIndex(a => a.id === accountId);
+        if (index !== -1) {
+          data.accounts[index] = {
+            ...data.accounts[index],
+            name: form.name.trim(),
+            issuer: form.issuer.trim(),
+            secret: cleanSecret,
+            color: form.color,
+            icon: form.icon,
+            folderId: form.folderId,
+          };
+        }
+      } else {
+        // Create logic
+        let siblings = form.folderId
+          ? data.accounts.filter(a => a.folderId === form.folderId)
+          : [...data.folders, ...data.accounts.filter(a => !a.folderId)];
 
-      const newAccount: Account = {
-        id: Date.now().toString(),
-        name: form.name.trim(),
-        issuer: form.issuer.trim(),
-        secret: cleanSecret,
-        type: 'totp',
-        color: form.color,
-        icon: form.icon,
-        folderId: form.folderId,
-        position: maxPos + 1,
-        createdAt: Date.now()
-      };
+        const maxPos = siblings.reduce((max, item) => Math.max(max, item.position || -1), -1);
 
-      data.accounts.push(newAccount);
+        const newAccount: Account = {
+          id: Date.now().toString(),
+          name: form.name.trim(),
+          issuer: form.issuer.trim(),
+          secret: cleanSecret,
+          type: 'totp',
+          color: form.color,
+          icon: form.icon,
+          folderId: form.folderId,
+          position: maxPos + 1,
+          createdAt: Date.now()
+        };
+        data.accounts.push(newAccount);
+      }
+
       await saveAuthData(data);
       router.back();
     } catch {
@@ -84,14 +105,15 @@ export default function AddAccountScreen() {
 
         <View style={styles.header}>
           <TouchableOpacity onPress={router.back} style={{ padding: 5 }}><ArrowLeft size={24} color={colors.text} /></TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>{TEXTS.newAccount}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>
+            {isEditing ? TEXTS.editAccount : TEXTS.newAccount}
+          </Text>
         </View>
 
         <View style={{ gap: 15 }}>
           <InputLabel label={TEXTS.accNameLabel} value={form.name} onChange={(t: string) => updateForm('name', t)} placeholder={TEXTS.accNamePlace} colors={colors} maxLength={50} />
           <InputLabel label={TEXTS.issuerLabel} value={form.issuer} onChange={(t: string) => updateForm('issuer', t)} placeholder={TEXTS.issuerPlace} colors={colors} maxLength={50} />
 
-          {/* Secret Input with Eye */}
           <View>
             <Text style={[styles.label, { color: colors.subtext }]}>{TEXTS.secretLabel}</Text>
             <View style={[styles.inputBox, { borderColor: colors.headerBorder, backgroundColor: colors.card }]}>
@@ -108,7 +130,6 @@ export default function AddAccountScreen() {
             </View>
           </View>
 
-          {/* Folder Selector */}
           {folders.length > 0 && (
             <View>
               <Text style={[styles.label, { color: colors.subtext }]}>{TEXTS.folder}</Text>
@@ -129,7 +150,12 @@ export default function AddAccountScreen() {
 
           <TouchableOpacity style={[styles.saveBtn, { backgroundColor: form.color }]} onPress={handleSave} disabled={loading}>
             <Save size={20} color="white" />
-            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18 }}>{loading ? TEXTS.saving : TEXTS.save}</Text>
+            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18 }}>
+              {loading
+                ? TEXTS.saving
+                : (isEditing ? TEXTS.confirmEdit : TEXTS.save)
+              }
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

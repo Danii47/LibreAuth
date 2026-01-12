@@ -23,6 +23,10 @@ if [ -n "$(git status --porcelain)" ]; then
   exit 1
 fi
 
+echo "⚠️ ¿Has actualizado las notas de la versión en 'distribution/whatsnew/'?"
+echo "   (Si no lo has hecho, cancela con Ctrl+C, actualízalas y haz commit)"
+read -p "Presiona ENTER para continuar si ya están listas..."
+
 print_step "Updating 'dev' branch..."
 git checkout dev
 git pull origin dev
