@@ -8,16 +8,18 @@ interface HomeHeaderProps {
   onExitSelection: () => void;
   onMove: () => void;
   onDelete: () => void;
-  onSettings: () => void;
+  onSettings?: () => void;
   onAdd: () => void;
   onEdit: () => void;
   onSearch: () => void;
 
-  // Nuevas props para el buscador
   isSearching: boolean;
   searchQuery: string;
   onSearchChange: (text: string) => void;
   onCancelSearch: () => void;
+
+  title?: string;
+  onBack?: () => void;
 
   colors: any;
 }
@@ -36,6 +38,8 @@ export const HomeHeader = ({
   searchQuery,
   onSearchChange,
   onCancelSearch,
+  title,
+  onBack,
   colors
 }: HomeHeaderProps) => {
   return (
@@ -100,11 +104,23 @@ export const HomeHeader = ({
         </View>
       ) : (
         <View style={styles.normalRow}>
-          <Text style={[styles.title, { color: colors.text }]}>{TEXTS.myKeys}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+            {onBack && (
+              <TouchableOpacity onPress={onBack} style={styles.iconButton}>
+                <ArrowLeft color={colors.text} size={26} />
+              </TouchableOpacity>
+            )}
+            <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+              {title || TEXTS.myKeys}
+            </Text>
+          </View>
+
           <View style={styles.rightActions}>
-            <TouchableOpacity onPress={onSettings} style={styles.iconButton}>
-              <Settings color={colors.text} size={26} />
-            </TouchableOpacity>
+            {onSettings && (
+              <TouchableOpacity onPress={onSettings} style={styles.iconButton}>
+                <Settings color={colors.text} size={26} />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity onPress={onSearch} style={styles.iconButton}>
               <Search color={colors.text} size={26} />
             </TouchableOpacity>
@@ -158,7 +174,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    flexShrink: 1
   },
   rightActions: {
     flexDirection: 'row',
