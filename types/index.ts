@@ -34,3 +34,8 @@ export interface AuthData {
   accounts: Account[];
   folders: Folder[];
 }
+
+// Error types for export and import operations
+export type ExportError = "NO_DATA" | "CANCELLED" | "SHARING_UNAVAILABLE" | "UNKNOWN";
+
+export type ImportError = "CANCELLED" | "INVALID_FORMAT" | "UNKNOWN";
