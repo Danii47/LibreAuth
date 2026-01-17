@@ -1,3 +1,4 @@
-- ¡Novedad! Edición de cuentas y carpetas: Ahora puedes modificar cualquier elemento existente. Mantén pulsado para seleccionar y toca el icono del lápiz para cambiar el nombre, color, icono o secreto.
-- Mejoras en la interfaz de creación y edición.
-- Corrección de errores y mejoras de estabilidad.
+- ¡Novedad! Importación de cuentas: Ahora puedes importar tus claves desde Aegis (JSON) o archivos de texto con enlaces.
+- Mejoras en carpetas: Ahora puedes buscar y reordenar tus cuentas dentro de las carpetas, igual que en la pantalla principal.
+- Seguridad mejorada: Se solicitará tu huella / FaceID para confirmar si intentas desactivar el bloqueo de la app.
+- Solucionado un problema que impedía entrar en dispositivos sin bloqueo de pantalla configurado.
