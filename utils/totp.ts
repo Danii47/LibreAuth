@@ -1,3 +1,4 @@
+import { Buffer } from "buffer";
 import HmacSHA1 from "crypto-js/hmac-sha1";
 import Hex from "crypto-js/enc-hex";
 
@@ -56,7 +57,7 @@ function computeHOTP(keyWord: any, counter: number): string {
 
 export function generateTOTP(
   secretKey: string,
-  intervalSeconds: number = 30
+  intervalSeconds: number = 30,
 ): {
   actualCode: string;
   nextCode: string;
@@ -102,7 +103,7 @@ export function extractOTPParams(otpAuthUrl: string): {
     const issuerParam = url.searchParams.get("issuer");
 
     const label = decodeURIComponent(
-      url.pathname.replace(/^\/\//, "").slice(1)
+      url.pathname.replace(/^\/\//, "").slice(1),
     );
 
     let issuerLabel: string | undefined;
