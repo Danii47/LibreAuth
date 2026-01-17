@@ -20,7 +20,10 @@ export const AegisImporter: Importer = {
         if (entry.type !== "totp" && entry.type !== "hotp") return;
 
         const newAccount: Account = {
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+          id:
+            Date.now().toString() +
+            Math.random().toString(36).substring(2, 5) +
+            index,
           name: entry.name || "Sin nombre",
           issuer: entry.issuer || "",
           secret: entry.info.secret.replace(/\s/g, "").toUpperCase(),
@@ -28,7 +31,7 @@ export const AegisImporter: Importer = {
           color: "#2e78b7",
           createdAt: Date.now(),
           type: entry.type as "totp" | "hotp",
-          position: index
+          position: index,
 
           // digits: entry.info.digits,
           // period: entry.info.period,

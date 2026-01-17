@@ -9,7 +9,7 @@ export const UriListImporter: Importer = {
   async parse(content: string): Promise<ImportResult> {
     const lines = content.split("\n");
     const accounts: Account[] = [];
-    let relativeIndex = 0; 
+    let relativeIndex = 0;
 
     for (const line of lines) {
       const trimmed = line.trim();
@@ -25,19 +25,38 @@ export const UriListImporter: Importer = {
             : "totp";
 
         const secretMatch = trimmed.match(/secret=([A-Z0-9]+)/i);
-        const issuerMatch =
-          trimmed.match(/issuer=([^&]+)/) || trimmed.match(/\/([^:]+):/);
-        const nameMatch = trimmed.match(/:([^?]+)\?/);
+
+        const labelMatch = trimmed.match(/otpauth:\/\/[a-z]+\/([^?]+)/i);
+
+        let name = "Importada";
+        let issuerFromLabel = "";
+
+        if (labelMatch) {
+          const fullLabel = decodeURIComponent(labelMatch[1]);
+
+          if (fullLabel.includes(":")) {
+            const parts = fullLabel.split(":");
+            issuerFromLabel = parts[0].trim();
+            name = parts.slice(1).join(":").trim();
+          } else {
+            name = fullLabel;
+          }
+        }
+
+        const issuerParamMatch = trimmed.match(/issuer=([^&]+)/i);
+        const issuer = issuerParamMatch
+          ? decodeURIComponent(issuerParamMatch[1])
+          : issuerFromLabel;
 
         if (secretMatch) {
           accounts.push({
             id:
               Date.now().toString() +
-              Math.random().toString(36).substr(2, 5) +
+              Math.random().toString(36).substring(2, 7) +
               relativeIndex,
             secret: secretMatch[1],
-            name: nameMatch ? decodeURIComponent(nameMatch[1]) : "Importada",
-            issuer: issuerMatch ? decodeURIComponent(issuerMatch[1]) : "",
+            name: name,
+            issuer: issuer,
             icon: "default",
             color: "#555555",
             createdAt: Date.now(),
