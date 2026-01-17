@@ -98,6 +98,7 @@ const ALL_TEXTS: { [key: string]: { [key: string]: string } } = {
     editAccount: "Edit account",
     confirmEdit: "Confirm edit",
     couldNotSaveFolder: "Could not save folder.",
+    verifyYourIdentityToDeactivate: "Verify your identity to deactivate",
   },
   es: {
     // Spanish
@@ -193,6 +194,7 @@ const ALL_TEXTS: { [key: string]: { [key: string]: string } } = {
     editAccount: "Editar cuenta",
     confirmEdit: "Confirmar edición",
     couldNotSaveFolder: "No se pudo guardar la carpeta.",
+    verifyYourIdentityToDeactivate: "Verifica tu identidad para desactivar",
   },
   fr: {
     // French
@@ -289,6 +291,7 @@ const ALL_TEXTS: { [key: string]: { [key: string]: string } } = {
     editAccount: "Modifier le compte",
     confirmEdit: "Confirmer la modification",
     couldNotSaveFolder: "Impossible d'enregistrer le dossier.",
+    verifyYourIdentityToDeactivate: "Vérifiez votre identité pour désactiver",
   },
   de: {
     // German
@@ -386,6 +389,7 @@ const ALL_TEXTS: { [key: string]: { [key: string]: string } } = {
     editAccount: "Konto bearbeiten",
     confirmEdit: "Bearbeitung bestätigen",
     couldNotSaveFolder: "Ordner konnte nicht gespeichert werden.",
+    verifyYourIdentityToDeactivate: "Bestätigen Sie Ihre Identität zum Deaktivieren",
   },
   it: {
     // Italian
@@ -481,6 +485,7 @@ const ALL_TEXTS: { [key: string]: { [key: string]: string } } = {
     editAccount: "Modifica account",
     confirmEdit: "Conferma modifica",
     couldNotSaveFolder: "Impossibile salvare la cartella.",
+    verifyYourIdentityToDeactivate: "Verifica la tua identità per disattivare",
   },
 };
 
