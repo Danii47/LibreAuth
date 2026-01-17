@@ -48,7 +48,9 @@ export default function RootLayout() {
 
   const checkSecurityAndLock = useCallback(async () => {
     const isEnabled = await getBiometricEnabled();
-    if (isEnabled) {
+    const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+
+    if (isEnabled && isEnrolled) {
       setIsLocked(true);
       authenticate();
     } else {
