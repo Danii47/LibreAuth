@@ -4,12 +4,12 @@ import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { Platform } from "react-native";
+import { processImportFile } from "./importers";
+import { ExportError, ImportError } from "@/types";
 
 const { StorageAccessFramework } = FileSystem;
 
-type ExportError = "NO_DATA" | "CANCELLED" | "SHARING_UNAVAILABLE" | "UNKNOWN";
 
-type ImportError = "CANCELLED" | "INVALID_FORMAT" | "UNKNOWN";
 
 export const BackupService = {
   exportData: async (): Promise<{ success: boolean; error?: ExportError }> => {
@@ -72,50 +72,57 @@ export const BackupService = {
     }
   },
 
-  importData: async (): Promise<{
-    success: boolean;
-    count?: number;
-    error?: ImportError;
-  }> => {
+  importData: async (): Promise<{ success: boolean; count?: number; error?: ImportError }> => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "application/json",
-        copyToCacheDirectory: true,
+        type: ['application/json', 'text/plain', '*/*'],
+        copyToCacheDirectory: true
       });
+
       if (result.canceled) return { success: false, error: "CANCELLED" };
 
-      const fileContent = await FileSystem.readAsStringAsync(
-        result.assets[0].uri
-      );
-      const parsed = JSON.parse(fileContent);
-      const importedData = parsed.data || parsed;
+      const fileUri = result.assets[0].uri;
+      const fileContent = await FileSystem.readAsStringAsync(fileUri);
 
-      if (!importedData.accounts && !importedData.folders)
-        return { success: false, error: "INVALID_FORMAT" };
+      // Is LibreAuth native backup?
+      try {
+        const json = JSON.parse(fileContent);
+        if (Array.isArray(json.accounts) && Array.isArray(json.folders)) {
+          await saveAuthData(json);
+          return { success: true, count: json.accounts.length };
+        }
+      } catch {
+        // Not valid JSON, proceed to external importers
+      }
 
-      const currentData = await loadAuthData();
+      const importResult = await processImportFile(fileContent);
 
-      const newAccounts = importedData.accounts || [];
-      const newFolders = importedData.folders || [];
+      if (importResult.success && importResult.accounts.length > 0) {
+        const currentData = await loadAuthData();
+        
+        const allItems = [...currentData.accounts, ...currentData.folders];
+        const maxPosition = allItems.reduce((max, item) => Math.max(max, item.position || 0), -1);
 
-      let finalAccounts = [...(currentData.accounts || [])];
-      let finalFolders = [...(currentData.folders || [])];
+        const newAccounts = importResult.accounts.map((acc, index) => ({
+          ...acc,
+          position: maxPosition + 1 + index
+        }));
 
-      newAccounts.forEach((impAcc: any) => {
-        finalAccounts = finalAccounts.filter((acc) => acc.id !== impAcc.id);
-        finalAccounts.push(impAcc);
-      });
+        const mergedAccounts = [...currentData.accounts, ...newAccounts];
+        
+        await saveAuthData({
+          ...currentData,
+          accounts: mergedAccounts
+        });
 
-      newFolders.forEach((impFold: any) => {
-        finalFolders = finalFolders.filter((f) => f.id !== impFold.id);
-        finalFolders.push(impFold);
-      });
+        return { success: true, count: importResult.count };
+      }
 
-      await saveAuthData({ accounts: finalAccounts, folders: finalFolders });
-      return { success: true, count: newAccounts.length + newFolders.length };
-    } catch (e) {
-      console.error(e);
-      return { success: false, error: "UNKNOWN" };
+      return { success: false, error: importResult.error };
+
+    } catch (error) {
+      console.error(error);
+      return { success: false, error: 'UNKNOWN' };
     }
-  },
+  }
 };
