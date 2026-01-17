@@ -37,7 +37,7 @@ git pull origin main
 git merge dev --no-ff --no-edit
 
 
-print_step "Actualizando versión a $NEW_VERSION..."
+print_step "Updating version to $NEW_VERSION..."
 
 npm version $NEW_VERSION --no-git-tag-version
 
@@ -54,7 +54,7 @@ console.log('✅ app.json updated.');
 "
 
 print_step "Creating version commit and pushing to main..."
-git add app.json package.json
+git add app.json package.json package-lock.json
 git commit -m "chore: bump version to $NEW_VERSION"
 git push origin main
 

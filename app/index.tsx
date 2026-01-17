@@ -208,7 +208,7 @@ export default function HomeScreen() {
   }, [selectionMode, selectedIds, handlePress, handleLongPress, isSearching]);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, paddingBottom: 20 }}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <StatusBar barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'} />
 

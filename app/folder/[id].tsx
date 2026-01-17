@@ -1,7 +1,9 @@
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, useColorScheme, StatusBar } from 'react-native';
+import { StyleSheet, View, Text, StatusBar, useColorScheme } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
-import { useState, useCallback } from 'react';
-import { Plus, Trash2, ArrowLeft, X, FolderOpen } from 'lucide-react-native';
+import { useState, useCallback, useMemo } from 'react';
+import DraggableFlatList, { ScaleDecorator, RenderItemParams } from 'react-native-draggable-flatlist';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 import { TotpCard } from '@/components/TotpCard';
 import { loadAuthData, saveAuthData } from '@/storage/secureStore';
 import { Account, Folder } from '@/types';
@@ -10,6 +12,8 @@ import { getColors } from '@/constants/Styles';
 import { DeleteModal } from '@/components/DeleteModal';
 import { AddOptionsModal } from '@/components/AddOptionsModal';
 import { MoveToFolderModal } from '@/components/MoveToFolderModal';
+import { HomeHeader } from '@/components/HomeHeader';
+import { useSelection } from '@/hooks/useSelection';
 
 export default function FolderScreen() {
   const router = useRouter();
@@ -22,12 +26,12 @@ export default function FolderScreen() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [addModalVisible, setAddModalVisible] = useState(false);
-  const [moveModalVisible, setMoveModalVisible] = useState(false);
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [modals, setModals] = useState({ add: false, move: false, delete: false });
 
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const selectionMode = selectedIds.length > 0;
+  const { selectedIds, selectionMode, toggleSelection, clearSelection, startSelection } = useSelection();
+
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -36,209 +40,234 @@ export default function FolderScreen() {
     setAllFolders(data.folders || []);
     const currentFolder = data.folders?.find(f => f.id === id);
     setFolder(currentFolder || null);
-    const folderAccounts = data.accounts.filter(acc => acc.folderId === id);
-    setAccounts(folderAccounts);
 
+    const folderAccounts = data.accounts.filter(acc => acc.folderId === id);
+    folderAccounts.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+
+    setAccounts(folderAccounts);
     setLoading(false);
   }, [id]);
 
   useFocusEffect(
     useCallback(() => {
       loadData();
-      setSelectedIds([]);
-    }, [loadData])
+      clearSelection();
+      setIsSearching(false);
+      setSearchQuery('');
+    }, [loadData, clearSelection])
   );
 
-  const handleAccountPress = (account: Account) => {
+  const filteredData = useMemo(() => {
+    if (!isSearching || !searchQuery.trim()) {
+      return accounts;
+    }
+    const query = searchQuery.toLowerCase();
+    return accounts.filter(acc =>
+      acc.name.toLowerCase().includes(query) ||
+      acc.issuer?.toLowerCase().includes(query)
+    );
+  }, [accounts, isSearching, searchQuery]);
+
+  const toggleModal = (key: keyof typeof modals, val: boolean) => setModals(prev => ({ ...prev, [key]: val }));
+
+  const onDragEnd = async ({ data: newData }: { data: Account[] }) => {
+    if (isSearching) return;
+
+    const updatedData = newData.map((item, index) => ({
+      ...item,
+      position: index
+    }));
+
+    setAccounts(updatedData);
+
+    const authData = await loadAuthData();
+    const allAccounts = authData.accounts || [];
+
+    const updatedGlobalAccounts = allAccounts.map(account => {
+      const updated = updatedData.find(u => u.id === account.id);
+      return updated ? { ...account, position: updated.position } : account;
+    });
+
+    await saveAuthData({ ...authData, accounts: updatedGlobalAccounts });
+  };
+
+  const handlePress = useCallback((item: Account) => {
     if (selectionMode) {
-      toggleSelection(account.id);
+      toggleSelection(item.id);
     }
-  };
+  }, [selectionMode, toggleSelection]);
 
-  const handleLongPress = (account: Account) => {
-    if (!selectionMode) {
-      setSelectedIds([account.id]);
-    } else {
-      toggleSelection(account.id);
-    }
-  };
-
-  const toggleSelection = (itemId: string) => {
-    if (selectedIds.includes(itemId)) {
-      setSelectedIds(selectedIds.filter(i => i !== itemId));
-    } else {
-      setSelectedIds([...selectedIds, itemId]);
-    }
-  };
-
-  const exitSelectionMode = () => {
-    setSelectedIds([]);
-    setMoveModalVisible(false);
-    setDeleteModalVisible(false);
-  };
-
-  const handleDeleteSelected = () => {
-    setDeleteModalVisible(true);
-  };
+  const handleLongPress = useCallback((item: Account) => {
+    if (isSearching) return;
+    if (!selectionMode) startSelection(item.id);
+    else toggleSelection(item.id);
+  }, [selectionMode, startSelection, toggleSelection, isSearching]);
 
   const performBatchDelete = async () => {
     const data = await loadAuthData();
     data.accounts = data.accounts.filter(acc => !selectedIds.includes(acc.id));
-
     await saveAuthData(data);
     loadData();
-    exitSelectionMode();
-  };
-
-  // --- MOVE ---
-  const handleMoveSelected = () => {
-    setMoveModalVisible(true);
+    clearSelection();
+    toggleModal('delete', false);
   };
 
   const performBatchMove = async (targetFolderId: string | undefined) => {
     const data = await loadAuthData();
-
     data.accounts = data.accounts.map(acc => {
       if (selectedIds.includes(acc.id)) {
         return { ...acc, folderId: targetFolderId };
       }
       return acc;
     });
-
     await saveAuthData(data);
     loadData();
-    exitSelectionMode();
+    clearSelection();
+    toggleModal('move', false);
   };
 
-  const renderHeader = () => {
-    if (selectionMode) {
-      return (
-        <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: colors.headerBorder }]}>
-          <TouchableOpacity onPress={exitSelectionMode} style={{ padding: 8 }}>
-            <X color={colors.text} size={24} />
-          </TouchableOpacity>
-          <Text style={[styles.title, { fontSize: 20, color: colors.text }]}>
-            {selectedIds.length} {TEXTS.selected}
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 25 }}>
-            <TouchableOpacity onPress={handleMoveSelected}>
-              <FolderOpen color={colors.text} size={24} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleDeleteSelected}>
-              <Trash2 color={colors.danger} size={24} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      );
-    }
+  const handleEdit = () => {
+    const accountId = selectedIds[0];
+    const account = accounts.find(a => a.id === accountId);
 
-    return (
-      <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: colors.headerBorder }]}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <TouchableOpacity onPress={() => router.back()} style={{ padding: 5 }}>
-            <ArrowLeft color={colors.text} size={26} />
-          </TouchableOpacity>
+    if (!account) return;
 
-          <Text
-            style={[styles.title, { color: colors.text, fontSize: 22 }]}
-            numberOfLines={1}
-          >
-            {folder ? folder.name : 'Carpeta'}
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => setAddModalVisible(true)}
-        >
-          <Plus color="white" size={24} />
-        </TouchableOpacity>
-      </View>
-    );
+    router.push({
+      pathname: '/add-account',
+      params: {
+        id: account.id,
+        name: account.name,
+        issuer: account.issuer,
+        secret: account.secret,
+        icon: account.icon,
+        color: account.color,
+        folderId: account.folderId
+      }
+    });
+    clearSelection();
   };
 
   const handleScanQR = () => {
-    setAddModalVisible(false);
+    toggleModal('add', false);
     router.push({
       pathname: '/scan-qr',
       params: { initialFolderId: id }
     });
   };
+
   const handleManualEntry = () => {
-    setAddModalVisible(false);
+    toggleModal('add', false);
     router.push({ pathname: '/add-account', params: { initialFolderId: id } });
   };
 
   const availableFolders = allFolders.filter(f => f.id !== id);
 
+  const renderItem = useCallback(({ item, drag, isActive }: RenderItemParams<Account>) => {
+    const isSel = selectedIds.includes(item.id);
+    const dragEnabled = !isSearching;
+
+    return (
+      <ScaleDecorator activeScale={1.03}>
+        <TotpCard
+          account={item}
+          selectionMode={selectionMode}
+          isSelected={isSel}
+          drag={dragEnabled ? drag : undefined}
+          isActive={isActive}
+          onPress={() => handlePress(item)}
+          onLongPress={() => handleLongPress(item)}
+        />
+      </ScaleDecorator>
+    );
+  }, [selectionMode, selectedIds, handlePress, handleLongPress, isSearching]);
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'} />
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'} />
 
-      {renderHeader()}
+        <HomeHeader
+          selectionMode={selectionMode}
+          selectedCount={selectedIds.length}
+          onExitSelection={clearSelection}
 
-      <FlatList
-        data={accounts}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
-        renderItem={({ item }) => (
-          <TotpCard
-            account={item}
-            selectionMode={selectionMode}
-            isSelected={selectedIds.includes(item.id)}
-            onPress={() => handleAccountPress(item)}
-            onLongPress={() => handleLongPress(item)}
-          />
-        )}
-        ListEmptyComponent={
-          !loading ? (
-            <View style={styles.emptyState}>
-              <Text style={[styles.emptyText, { color: colors.text }]}>{TEXTS.empty}</Text>
-              <Text style={[styles.emptySubtext, { color: colors.subtext }]}>
-                {TEXTS.emptyFolder}
-              </Text>
-            </View>
-          ) : null
-        }
-      />
+          onMove={() => toggleModal('move', true)}
+          onDelete={() => toggleModal('delete', true)}
+          onEdit={handleEdit}
 
-      {/* MODAL 1: ADD ACCOUNT */}
-      <AddOptionsModal
-        visible={addModalVisible}
-        onClose={() => setAddModalVisible(false)}
-        onScanQR={handleScanQR}
-        onManualEntry={handleManualEntry}
-        colors={colors}
-      />
+          onSettings={() => router.push('/settings')}
+          onAdd={() => toggleModal('add', true)}
 
-      {/* MODAL 2: MOVE ACCOUNTS */}
-      <MoveToFolderModal
-        visible={moveModalVisible}
-        onClose={() => setMoveModalVisible(false)}
-        colors={colors}
-        folders={availableFolders}
-        onMoveToFolder={performBatchMove}
-        count={selectedIds.length}
-      />
+          onSearch={() => setIsSearching(true)}
+          isSearching={isSearching}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onCancelSearch={() => {
+            setIsSearching(false);
+            setSearchQuery('');
+          }}
 
-      {/* MODAL 3: DELETE ACCOUNTS */}
-      <DeleteModal
-        visible={deleteModalVisible}
-        onClose={() => setDeleteModalVisible(false)}
-        onConfirm={performBatchDelete}
-        count={selectedIds.length}
-        colors={colors}
-      />
+          title={folder ? folder.name : 'Carpeta'}
+          onBack={() => router.back()}
 
-    </View>
+          colors={colors}
+        />
+
+        <DraggableFlatList
+          data={filteredData}
+          onDragEnd={onDragEnd}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+          activationDistance={20}
+          dragItemOverflow={true}
+          ListEmptyComponent={
+            !loading ? (
+              <View style={styles.emptyState}>
+                <Text style={[styles.emptyText, { color: colors.text }]}>
+                  {isSearching ? TEXTS.noResults : TEXTS.empty}
+                </Text>
+                <Text style={[styles.emptySubtext, { color: colors.subtext }]}>
+                  {isSearching ? TEXTS.tryAnotherSearch : TEXTS.emptyFolder}
+                </Text>
+              </View>
+            ) : null
+          }
+        />
+
+        <AddOptionsModal
+          visible={modals.add}
+          onClose={() => toggleModal('add', false)}
+          onScanQR={handleScanQR}
+          onManualEntry={handleManualEntry}
+          colors={colors}
+          showCreateFolder={false}
+        />
+
+        <MoveToFolderModal
+          visible={modals.move}
+          onClose={() => toggleModal('move', false)}
+          colors={colors}
+          folders={availableFolders}
+          onMoveToFolder={performBatchMove}
+          count={selectedIds.length}
+        />
+
+        <DeleteModal
+          visible={modals.delete}
+          onClose={() => toggleModal('delete', false)}
+          onConfirm={performBatchDelete}
+          count={selectedIds.length}
+          colors={colors}
+        />
+
+      </View>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 15, paddingTop: 60, borderBottomWidth: 1 },
-  title: { fontSize: 28, fontWeight: 'bold', flexShrink: 1 },
-  addButton: { backgroundColor: '#2e78b7', width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', elevation: 4 },
   emptyState: { alignItems: 'center', marginTop: 100, opacity: 0.8 },
   emptyText: { fontSize: 18, fontWeight: 'bold' },
   emptySubtext: { fontSize: 14, marginTop: 5 },
