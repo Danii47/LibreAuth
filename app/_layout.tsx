@@ -1,13 +1,15 @@
 import { Buffer } from 'buffer';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import * as SystemUI from 'expo-system-ui';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { AppState, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { AppState, View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Fingerprint, Lock, KeyRound } from 'lucide-react-native';
+
+import SpInAppUpdates, { IAUUpdateKind } from 'sp-react-native-in-app-updates';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getColors } from '@/constants/Styles';
@@ -25,12 +27,40 @@ export default function RootLayout() {
   const [isLocked, setIsLocked] = useState(false);
   const [isBiometricSupported, setIsBiometricSupported] = useState(false);
 
+  const inAppUpdates = useMemo(() => new SpInAppUpdates(
+    false
+  ), []);
+
+  const checkForUpdates = useCallback(async () => {
+    if (Platform.OS !== 'android') return;
+
+    try {
+      const result = await inAppUpdates.checkNeedsUpdate();
+
+      if (result.shouldUpdate) {
+        await inAppUpdates.startUpdate({
+          updateType: IAUUpdateKind.IMMEDIATE,
+        });
+      }
+    } catch (error) {
+      console.log("Error buscando actualizaciones:", error);
+    }
+  }, [inAppUpdates]);
+
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(colors.background);
-  }, [colors.background]);
+    checkForUpdates();
+  }, [colors.background, checkForUpdates]);
 
   const authenticate = useCallback(async () => {
     try {
+      const hasSecurity = await LocalAuthentication.isEnrolledAsync();
+
+      if (!hasSecurity) {
+        setIsLocked(false);
+        return;
+      }
+
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: TEXTS.unlockApp,
         fallbackLabel: TEXTS.usePin,
@@ -72,6 +102,7 @@ export default function RootLayout() {
         nextAppState === 'active'
       ) {
         await checkSecurityAndLock();
+        checkForUpdates();
       }
       appState.current = nextAppState;
     });
@@ -79,7 +110,7 @@ export default function RootLayout() {
     return () => {
       subscription.remove();
     };
-  }, [checkSecurityAndLock]);
+  }, [checkSecurityAndLock, checkForUpdates]);
 
   const NavTheme = {
     ...(colorScheme === 'dark' ? DarkTheme : DefaultTheme),
