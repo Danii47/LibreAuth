@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -8,8 +8,6 @@ import * as SystemUI from 'expo-system-ui';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { AppState, View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Fingerprint, Lock, KeyRound } from 'lucide-react-native';
-
-import SpInAppUpdates, { IAUUpdateKind } from 'sp-react-native-in-app-updates';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getColors } from '@/constants/Styles';
@@ -27,14 +25,21 @@ export default function RootLayout() {
   const [isLocked, setIsLocked] = useState(false);
   const [isBiometricSupported, setIsBiometricSupported] = useState(false);
 
-  const inAppUpdates = useMemo(() => new SpInAppUpdates(
-    false
-  ), []);
-
   const checkForUpdates = useCallback(async () => {
+    if (__DEV__) {
+      console.log("Modo desarrollo: Saltando comprobación de actualizaciones.");
+      return;
+    }
+
     if (Platform.OS !== 'android') return;
 
     try {
+      
+      const module = await import('sp-react-native-in-app-updates');
+      const SpInAppUpdates = module.default;
+      const { IAUUpdateKind } = module;
+
+      const inAppUpdates = new SpInAppUpdates(false);
       const result = await inAppUpdates.checkNeedsUpdate();
 
       if (result.shouldUpdate) {
@@ -43,9 +48,9 @@ export default function RootLayout() {
         });
       }
     } catch (error) {
-      console.log("Error buscando actualizaciones:", error);
+      console.log("Error buscando actualizaciones (o librería no disponible):", error);
     }
-  }, [inAppUpdates]);
+  }, []);
 
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(colors.background);
