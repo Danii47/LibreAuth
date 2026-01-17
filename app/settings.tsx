@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, ChevronRight, Download, Fingerprint, Info, Shield, Upload } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Linking, ScrollView, StatusBar, StyleSheet, Switch, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { getColors } from '@/constants/Styles';
 import { getBiometricEnabled, setBiometricEnabled } from '@/storage/secureStore';
 import { APP_NAME, APP_PRIVACY_POLICY_URL, APP_VERSION } from '@/constants/AppInformation';
@@ -23,6 +24,21 @@ export default function SettingsScreen() {
   useEffect(() => { getBiometricEnabled().then(setBiometric); }, []);
 
   const toggleBiometric = async (val: boolean) => {
+    if (!val) {
+      try {
+        const result = await LocalAuthentication.authenticateAsync({
+          promptMessage: TEXTS.verifyYourIdentityToDeactivate,
+          cancelLabel: TEXTS.cancel,
+          disableDeviceFallback: false,
+        });
+
+        if (!result.success) return;
+      } catch (error) {
+        console.error("Error verificando identidad", error);
+        return;
+      }
+    }
+
     setBiometric(val);
     await setBiometricEnabled(val);
   };
