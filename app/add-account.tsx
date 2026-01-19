@@ -51,7 +51,7 @@ export default function AddAccountScreen() {
     secret: getParam(secret) || getParam(scannedSecret),
     color: getParam(color) || ACCOUNT_COLORS[0],
     icon: getParam(icon) || 'default',
-    
+
     type: (getParam(scannedType) as AccountType) || "totp",
     algorithm: (getParam(scannedAlgorithm) as AccountAlgorithm) || "SHA1",
     digits: getParam(scannedDigits) ? parseInt(getParam(scannedDigits) as string) : 6,
@@ -71,7 +71,17 @@ export default function AddAccountScreen() {
   const isEditing = Boolean(id);
 
   const updateForm = (key: keyof AccountFormState, value: any) => {
-    setForm(prev => ({ ...prev, [key]: value }));
+    setForm(prev => {
+      const newState = { ...prev, [key]: value };
+
+      if (key === 'algorithm' && value === 'STEAM') {
+        newState.digits = 5;
+        newState.period = '30';
+        newState.type = 'totp';
+      }
+
+      return newState;
+    });
   };
 
   const toggleAdvanced = () => {
@@ -261,7 +271,7 @@ export default function AddAccountScreen() {
           ]}>
 
             <SelectionGroup label="Tipo de Token" options={["totp", "hotp"]} fieldKey="type" form={form} updateForm={updateForm} colors={colors} />
-            <SelectionGroup label="Algoritmo" options={["SHA1", "SHA256", "SHA512"]} fieldKey="algorithm" form={form} updateForm={updateForm} colors={colors} />
+            <SelectionGroup label="Algoritmo" options={["SHA1", "SHA256", "SHA512", "STEAM"]} fieldKey="algorithm" form={form} updateForm={updateForm} colors={colors} />
             <SelectionGroup label="Dígitos" options={[5, 6, 7, 8]} fieldKey="digits" form={form} updateForm={updateForm} colors={colors} />
 
             <View style={styles.row}>
