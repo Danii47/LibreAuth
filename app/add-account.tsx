@@ -17,14 +17,14 @@ import { getParam } from "@/utils";
 import { ACCOUNT_COLORS } from "@/constants/Colors";
 
 interface AccountFormState {
-  // Básicos
+  // Basic
   name: string;
   issuer: string;
   secret: string;
   icon: string;
   color: string;
 
-  // Avanzados
+  // Advanced
   type: AccountType;
   algorithm: AccountAlgorithm;
   digits: number;
@@ -244,7 +244,7 @@ export default function AddAccountScreen() {
           {showAdvanced ? <ChevronUp size={20} color={colors.subtext} /> : <ChevronDown size={20} color={colors.subtext} />}
         </TouchableOpacity>
 
-        {/* Contenido Avanzado */}
+        {/* Advanced Options */}
         {showAdvanced && (
           <View style={[
             styles.advancedContainer,
