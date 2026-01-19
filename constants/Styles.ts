@@ -15,5 +15,6 @@ export const getColors = (scheme: "light" | "dark" | null | undefined) => {
     modalBg: isDark ? "#1b1b1dff" : "#FFFFFF",
     buttonBg: isDark ? "#2C2C2E" : "#E2E8F0",
     cancelButtonBg: isDark ? "#2C2C2E" : "#E2E8F0",
+    border: isDark ? "#3a3a3cff" : "#dddddd",
   };
 };

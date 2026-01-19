@@ -1,22 +1,24 @@
 // TOTP: Time-based, HOTP: Counter-based
 export type AccountType = "totp" | "hotp";
+export type AccountAlgorithm = "SHA1" | "SHA256" | "SHA512" | "STEAM";
 
 export interface Account {
   id: string;
-  secret: string; // Seed
-  name: string; // Custom name
+  name: string;
   issuer?: string;
-  type: AccountType;
-
-  // Personalization
-  color?: string; // Hex color string
+  secret: string;
   icon?: string;
-
-  // Organization
-  folderId?: string; // null or id of the folder
+  color?: string;
   createdAt: number;
+  position?: number;
 
-  position: number; // For ordering within folder or root
+  type?: AccountType; // Default: 'totp'
+  algorithm?: AccountAlgorithm; // Default: 'SHA1'
+  digits?: number; // Default: 6
+  period?: number; // Default: 30 (only TOTP)
+  counter?: number; // Default: 0 (only HOTP)
+
+  folderId?: string;
 }
 
 export interface Folder {

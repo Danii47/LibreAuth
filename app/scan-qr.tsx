@@ -48,9 +48,15 @@ export default function ScanQrScreen() {
       router.replace({
         pathname: '/add-account',
         params: {
-          scannedSecret: params.secret,
-          scannedIssuer: params.issuer || '',
-          scannedName: params.accountName || '',
+          name: params.accountName || '',
+          issuer: params.issuer || '',
+          secret: params.secret,
+          type: params.type,
+          algorithm: params.algorithm,
+          digits: params.digits.toString(),
+          period: params.period.toString(),
+          counter: params.counter.toString(),
+
           initialFolderId: initialFolderId || ''
         }
       });

@@ -129,17 +129,23 @@ export default function HomeScreen() {
         }
       });
     } else {
-      const acc = item as Account;
+      const account = item as Account;
       router.push({
         pathname: '/add-account',
         params: {
-          id: acc.id,
-          name: acc.name,
-          issuer: acc.issuer,
-          secret: acc.secret,
-          icon: acc.icon,
-          color: acc.color,
-          folderId: acc.folderId
+          id: account.id,
+          name: account.name,
+          issuer: account.issuer,
+          secret: account.secret,
+          icon: account.icon,
+          color: account.color,
+          type: account.type,
+          algorithm: account.algorithm,
+          digits: account.digits?.toString(),
+          period: account.period?.toString(),
+          counter: account.counter?.toString(),
+
+          folderId: account.folderId
         }
       });
     }
