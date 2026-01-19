@@ -20,7 +20,7 @@ interface Props {
   isActive?: boolean;
 }
 
-export const TotpCard = memo(({ account, onPress, onLongPress, selectionMode, isSelected, drag, isActive }: Props) => {
+const TotpCardComponent = ({ account, onPress, onLongPress, selectionMode, isSelected, drag, isActive }: Props) => {
 
   const scheme = useColorScheme();
   const colors = getColors(scheme);
@@ -31,14 +31,18 @@ export const TotpCard = memo(({ account, onPress, onLongPress, selectionMode, is
 
   const zeros = "0".repeat(digits);
   const [codes, setCodes] = useState({ actualCode: zeros, nextCode: zeros });
-
-  const [progress, setProgress] = useState(1);
   const [isRevealed, setIsRevealed] = useState(false);
+
+  const progressAnim = useRef(new Animated.Value(1)).current;
+
   const lastCodes = useRef({ actualCode: "", nextCode: "" });
+  const lastEpoch = useRef(0);
   const revealTimeout = useRef<number | null>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    if (selectionMode) return;
+
     let animationFrameId: number;
 
     const animate = () => {
@@ -46,18 +50,24 @@ export const TotpCard = memo(({ account, onPress, onLongPress, selectionMode, is
       const periodMs = period * 1000;
       const remainingMs = periodMs - (now % periodMs);
 
-      setProgress(remainingMs / periodMs);
+      progressAnim.setValue(remainingMs / periodMs);
 
-      const newCodes = generateTOTP({
-        secretKey: account.secret,
-        intervalSeconds: period,
-        algorithm: algorithm,
-        digits: digits
-      });
+      const currentEpoch = Math.floor(now / periodMs);
 
-      if (newCodes.actualCode !== lastCodes.current.actualCode) {
-        setCodes(newCodes);
-        lastCodes.current = newCodes;
+      if (currentEpoch !== lastEpoch.current) {
+        lastEpoch.current = currentEpoch;
+
+        const newCodes = generateTOTP({
+          secretKey: account.secret,
+          intervalSeconds: period,
+          algorithm: algorithm,
+          digits: digits
+        });
+
+        if (newCodes.actualCode !== lastCodes.current.actualCode) {
+          setCodes(newCodes);
+          lastCodes.current = newCodes;
+        }
       }
 
       animationFrameId = requestAnimationFrame(animate);
@@ -69,7 +79,7 @@ export const TotpCard = memo(({ account, onPress, onLongPress, selectionMode, is
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       if (revealTimeout.current) clearTimeout(revealTimeout.current);
     };
-  }, [account.secret, period, algorithm, digits]);
+  }, [account.secret, period, algorithm, digits, selectionMode, progressAnim]);
 
   const animateTransition = (show: boolean) => {
     Animated.timing(fadeAnim, { toValue: 0, duration: 150, useNativeDriver: true }).start(() => {
@@ -102,7 +112,6 @@ export const TotpCard = memo(({ account, onPress, onLongPress, selectionMode, is
   const formatCode = (code: string) => {
     if (digits === 6) return `${code.slice(0, 3)} ${code.slice(3)}`;
     if (digits === 8) return `${code.slice(0, 4)} ${code.slice(4)}`;
-
     return code;
   };
 
@@ -184,41 +193,39 @@ export const TotpCard = memo(({ account, onPress, onLongPress, selectionMode, is
           ) : (
             <>
               <Animated.View style={{ opacity: fadeAnim, alignItems: 'flex-end', marginRight: 8 }}>
-                <Text
-                  style={[
-                    styles.code,
-                    { color: cardColor, fontSize: codeFontSize },
-                    !isRevealed && styles.hiddenCode
-                  ]}
-                >
+                <Text style={[styles.code, { color: cardColor, fontSize: codeFontSize }, !isRevealed && styles.hiddenCode]}>
                   {codeDisplay}
                 </Text>
 
                 <View style={styles.nextCodeWrapper}>
-                  <ChevronsRight
-                    size={14}
-                    color={cardColor}
-                    style={{ opacity: 0.65, marginRight: 1 }}
-                    strokeWidth={2.5}
-                  />
-                  <Text style={[
-                    styles.nextCode,
-                    { color: cardColor },
-                    !isRevealed && styles.hiddenNextCode
-                  ]}>
+                  <ChevronsRight size={14} color={cardColor} style={{ opacity: 0.65, marginRight: 1 }} strokeWidth={2.5} />
+                  <Text style={[styles.nextCode, { color: cardColor }, !isRevealed && styles.hiddenNextCode]}>
                     {nextCodeDisplay}
                   </Text>
                 </View>
               </Animated.View>
 
               <View style={styles.timerWrapper}>
-                <CircularTimer size={26} progress={progress} color={cardColor} />
+                <CircularTimer size={26} progress={progressAnim} color={cardColor} />
               </View>
             </>
           )}
         </View>
       </View>
     </TouchableOpacity>
+  );
+};
+
+export const TotpCard = memo(TotpCardComponent, (prev, next) => {
+  return (
+    prev.account.id === next.account.id &&
+    prev.account.secret === next.account.secret &&
+    prev.account.name === next.account.name &&
+    prev.account.issuer === next.account.issuer &&
+    prev.account.color === next.account.color &&
+    prev.isSelected === next.isSelected &&
+    prev.selectionMode === next.selectionMode &&
+    prev.isActive === next.isActive
   );
 });
 

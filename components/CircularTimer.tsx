@@ -1,16 +1,22 @@
+import { Animated, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { View } from 'react-native';
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 interface Props {
   size?: number;
-  progress: number;
+  progress: Animated.Value;
   color: string;
 }
 
 export const CircularTimer = ({ size = 24, progress, color }: Props) => {
   const radius = (size - 4) / 2;
   const circumference = radius * 2 * Math.PI;
-  const strokeDashoffset = circumference - progress * circumference;
+
+  const strokeDashoffset = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [circumference, 0],
+  });
 
   return (
     <View style={{ transform: [{ rotate: '-90deg' }] }}>
@@ -24,7 +30,7 @@ export const CircularTimer = ({ size = 24, progress, color }: Props) => {
           strokeWidth={3}
           fill="none"
         />
-        <Circle
+        <AnimatedCircle
           stroke={color}
           cx={size / 2}
           cy={size / 2}
