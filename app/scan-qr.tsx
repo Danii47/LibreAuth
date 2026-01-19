@@ -51,6 +51,12 @@ export default function ScanQrScreen() {
           scannedSecret: params.secret,
           scannedIssuer: params.issuer || '',
           scannedName: params.accountName || '',
+          scannedType: params.type,
+          scannedAlgorithm: params.algorithm,
+          scannedDigits: params.digits.toString(),
+          scannedPeriod: params.period.toString(),
+          scannedCounter: params.counter.toString(),
+
           initialFolderId: initialFolderId || ''
         }
       });
