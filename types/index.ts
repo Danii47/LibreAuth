@@ -1,6 +1,6 @@
 // TOTP: Time-based, HOTP: Counter-based
 export type AccountType = "totp" | "hotp";
-export type AccountAlgorithm = "SHA1" | "SHA256" | "SHA512";
+export type AccountAlgorithm = "SHA1" | "SHA256" | "SHA512" | "STEAM";
 
 export interface Account {
   id: string;
