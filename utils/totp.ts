@@ -5,6 +5,8 @@ import HmacSHA512 from "crypto-js/hmac-sha512";
 import Hex from "crypto-js/enc-hex";
 import { AccountAlgorithm } from "@/types";
 
+const STEAM_CHARS = "23456789BCDFGHJKMNPQRTVWXY";
+
 function base32ToBuffer(base32Str: string): Buffer {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
@@ -54,6 +56,7 @@ function computeHOTP({
       hmacResult = HmacSHA512(counterWord, keyWord);
       break;
     case "SHA1":
+    case "STEAM":
     default:
       hmacResult = HmacSHA1(counterWord, keyWord);
       break;
@@ -70,6 +73,17 @@ function computeHOTP({
     ((hmacBuffer[offset + 2] & 0xff) << 8) |
     (hmacBuffer[offset + 3] & 0xff);
 
+  if (algorithm === "STEAM") {
+    let fullCode = binary;
+    let code = "";
+
+    for (let i = 0; i < 5; i++) {
+      code += STEAM_CHARS.charAt(fullCode % 26);
+      fullCode = Math.floor(fullCode / 26);
+    }
+    return code;
+  }
+  
   const modulo = Math.pow(10, digits);
   const otp = binary % modulo;
 
@@ -81,7 +95,7 @@ export function generateTOTP({
   intervalSeconds = 30,
   algorithm = "SHA1",
   digits = 6,
-}: { secretKey: string; intervalSeconds?: number; algorithm: AccountAlgorithm; digits?: number; }): {
+}: { secretKey: string; intervalSeconds?: number; algorithm?: AccountAlgorithm; digits?: number; }): {
   actualCode: string;
   nextCode: string;
 } {
@@ -151,8 +165,11 @@ export function extractOTPParams(otpAuthUrl: string): {
     }
 
     const algoParam = url.searchParams.get("algorithm")?.toUpperCase();
-    const algorithm: AccountAlgorithm =
-      algoParam === "SHA256" || algoParam === "SHA512" ? algoParam : "SHA1";
+
+    let algorithm: AccountAlgorithm = "SHA1";
+    if (algoParam === "SHA256") algorithm = "SHA256";
+    else if (algoParam === "SHA512") algorithm = "SHA512";
+    else if (algoParam === "STEAM") algorithm = "STEAM";
 
     const digitsParam = url.searchParams.get("digits");
     const digits = digitsParam ? parseInt(digitsParam, 10) : 6;
