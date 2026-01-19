@@ -1,6 +1,9 @@
 import { Buffer } from "buffer";
 import HmacSHA1 from "crypto-js/hmac-sha1";
+import HmacSHA256 from "crypto-js/hmac-sha256";
+import HmacSHA512 from "crypto-js/hmac-sha512";
 import Hex from "crypto-js/enc-hex";
+import { AccountAlgorithm } from "@/types";
 
 function base32ToBuffer(base32Str: string): Buffer {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -33,11 +36,28 @@ function getCounterBuffer(counter: number): Buffer {
   return buffer;
 }
 
-function computeHOTP(keyWord: any, counter: number): string {
+function computeHOTP({
+  keyWord,
+  counter,
+  algorithm = "SHA1",
+  digits = 6
+}: { keyWord: any; counter: number; algorithm?: AccountAlgorithm; digits?: number; }): string {
   const counterBuf = getCounterBuffer(counter);
   const counterWord = Hex.parse(counterBuf.toString("hex"));
 
-  const hmacResult = HmacSHA1(counterWord, keyWord);
+  let hmacResult;
+  switch (algorithm) {
+    case "SHA256":
+      hmacResult = HmacSHA256(counterWord, keyWord);
+      break;
+    case "SHA512":
+      hmacResult = HmacSHA512(counterWord, keyWord);
+      break;
+    case "SHA1":
+    default:
+      hmacResult = HmacSHA1(counterWord, keyWord);
+      break;
+  }
 
   const hmacHex = hmacResult.toString(Hex);
   const hmacBuffer = Buffer.from(hmacHex, "hex");
@@ -50,15 +70,18 @@ function computeHOTP(keyWord: any, counter: number): string {
     ((hmacBuffer[offset + 2] & 0xff) << 8) |
     (hmacBuffer[offset + 3] & 0xff);
 
-  const otp = binary % 1000000;
+  const modulo = Math.pow(10, digits);
+  const otp = binary % modulo;
 
-  return otp.toString().padStart(6, "0");
+  return otp.toString().padStart(digits, "0");
 }
 
-export function generateTOTP(
-  secretKey: string,
-  intervalSeconds: number = 30,
-): {
+export function generateTOTP({
+  secretKey,
+  intervalSeconds = 30,
+  algorithm = "SHA1",
+  digits = 6,
+}: { secretKey: string; intervalSeconds?: number; algorithm: AccountAlgorithm; digits?: number; }): {
   actualCode: string;
   nextCode: string;
 } {
@@ -71,17 +94,19 @@ export function generateTOTP(
     const keyHex = keyBuffer.toString("hex");
     const keyWord = Hex.parse(keyHex);
 
-    const actualCode = computeHOTP(keyWord, counterActual);
-    const nextCode = computeHOTP(keyWord, counterNext);
+    const actualCode = computeHOTP({ keyWord, counter: counterActual, algorithm, digits });
+    const nextCode = computeHOTP({ keyWord, counter: counterNext, algorithm, digits });
 
     return { actualCode, nextCode };
   } catch (error) {
-    console.error("Error generando TOTP:", error);
-    return { actualCode: "000000", nextCode: "000000" };
+    console.error("Error generating TOTP:", error);
+
+    const zeros = "0".repeat(digits);
+    return { actualCode: zeros, nextCode: zeros };
   }
 }
 
-export function getTimeRemaining(intervalSeconds: number = 30): number {
+export function getTimeRemaining(intervalSeconds = 30): number {
   const seconds = Math.floor(Date.now() / 1000);
   return intervalSeconds - (seconds % intervalSeconds);
 }
@@ -90,12 +115,20 @@ export function extractOTPParams(otpAuthUrl: string): {
   secret: string;
   issuer?: string;
   accountName?: string;
+  type: "totp" | "hotp";
+  algorithm: AccountAlgorithm;
+  digits: number;
+  period: number;
+  counter: number;
 } {
   try {
     const url = new URL(otpAuthUrl);
+
     if (!url.protocol.startsWith("otpauth")) {
       throw new Error("Invalid protocol");
     }
+
+    const type = url.host.toLowerCase() === "hotp" ? "hotp" : "totp";
 
     const secret = url.searchParams.get("secret");
     if (!secret) throw new Error("Missing secret");
@@ -117,10 +150,28 @@ export function extractOTPParams(otpAuthUrl: string): {
       accountName = label;
     }
 
+    const algoParam = url.searchParams.get("algorithm")?.toUpperCase();
+    const algorithm: AccountAlgorithm =
+      algoParam === "SHA256" || algoParam === "SHA512" ? algoParam : "SHA1";
+
+    const digitsParam = url.searchParams.get("digits");
+    const digits = digitsParam ? parseInt(digitsParam, 10) : 6;
+
+    const periodParam = url.searchParams.get("period");
+    const period = periodParam ? parseInt(periodParam, 10) : 30;
+
+    const counterParam = url.searchParams.get("counter");
+    const counter = counterParam ? parseInt(counterParam, 10) : 0;
+
     return {
       secret,
       issuer: issuerParam || issuerLabel,
       accountName,
+      type,
+      algorithm,
+      digits,
+      period,
+      counter,
     };
   } catch (e) {
     console.error("Error parsing OTP URL", e);
