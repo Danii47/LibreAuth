@@ -39,7 +39,11 @@ export default function AddAccountScreen() {
   const colorScheme = useColorScheme();
   const colors = getColors(colorScheme);
 
-  const { initialFolderId, scannedSecret, scannedIssuer, scannedName, id, name, issuer, secret, icon, color, folderId } = useLocalSearchParams();
+  const {
+    initialFolderId, scannedSecret, scannedIssuer, scannedName,
+    scannedType, scannedAlgorithm, scannedDigits, scannedPeriod, scannedCounter,
+    id, name, issuer, secret, icon, color, folderId
+  } = useLocalSearchParams();
 
   const [form, setForm] = useState<AccountFormState>({
     name: getParam(name) || getParam(scannedName),
@@ -47,11 +51,13 @@ export default function AddAccountScreen() {
     secret: getParam(secret) || getParam(scannedSecret),
     color: getParam(color) || ACCOUNT_COLORS[0],
     icon: getParam(icon) || 'default',
-    type: "totp",
-    algorithm: "SHA1",
-    digits: 6,
-    period: "30",
-    counter: "0",
+    
+    type: (getParam(scannedType) as AccountType) || "totp",
+    algorithm: (getParam(scannedAlgorithm) as AccountAlgorithm) || "SHA1",
+    digits: getParam(scannedDigits) ? parseInt(getParam(scannedDigits) as string) : 6,
+    period: getParam(scannedPeriod) || "30",
+    counter: getParam(scannedCounter) || "0",
+
     folderId: (getParam(folderId) || (Array.isArray(initialFolderId) ? initialFolderId[0] : initialFolderId)) as string | undefined
   });
 
