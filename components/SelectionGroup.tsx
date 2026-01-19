@@ -20,7 +20,7 @@ export const SelectionGroup = ({ label, options, fieldKey, form, updateForm, col
           >
             <Text style={{
               color: isSelected ? "#FFF" : colors.text,
-              fontWeight: isSelected ? "bold" : "normal"
+              fontWeight: "normal"
             }}>
               {opt}
             </Text>
