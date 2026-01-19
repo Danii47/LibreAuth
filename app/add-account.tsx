@@ -40,23 +40,23 @@ export default function AddAccountScreen() {
   const colors = getColors(colorScheme);
 
   const {
-    initialFolderId, scannedSecret, scannedIssuer, scannedName,
-    scannedType, scannedAlgorithm, scannedDigits, scannedPeriod, scannedCounter,
+    initialFolderId,
+    type, algorithm, digits, period, counter,
     id, name, issuer, secret, icon, color, folderId
   } = useLocalSearchParams();
 
   const [form, setForm] = useState<AccountFormState>({
-    name: getParam(name) || getParam(scannedName),
-    issuer: getParam(issuer) || getParam(scannedIssuer),
-    secret: getParam(secret) || getParam(scannedSecret),
+    name: getParam(name),
+    issuer: getParam(issuer),
+    secret: getParam(secret),
     color: getParam(color) || ACCOUNT_COLORS[0],
     icon: getParam(icon) || 'default',
 
-    type: (getParam(scannedType) as AccountType) || "totp",
-    algorithm: (getParam(scannedAlgorithm) as AccountAlgorithm) || "SHA1",
-    digits: getParam(scannedDigits) ? parseInt(getParam(scannedDigits) as string) : 6,
-    period: getParam(scannedPeriod) || "30",
-    counter: getParam(scannedCounter) || "0",
+    type: (getParam(type) as AccountType) || "totp",
+    algorithm: (getParam(algorithm) as AccountAlgorithm) || "SHA1",
+    digits: getParam(digits) ? parseInt(getParam(digits) as string) : 6,
+    period: getParam(period) || "30",
+    counter: getParam(counter) || "0",
 
     folderId: (getParam(folderId) || (Array.isArray(initialFolderId) ? initialFolderId[0] : initialFolderId)) as string | undefined
   });
