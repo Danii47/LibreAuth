@@ -141,6 +141,12 @@ export default function FolderScreen() {
         secret: account.secret,
         icon: account.icon,
         color: account.color,
+        type: account.type,
+        algorithm: account.algorithm,
+        digits: account.digits?.toString(),
+        period: account.period?.toString(),
+        counter: account.counter?.toString(),
+
         folderId: account.folderId
       }
     });
