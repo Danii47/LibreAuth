@@ -1,38 +1,77 @@
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Save, Eye, EyeOff, FolderOpen } from 'lucide-react-native';
-import { useState, useEffect } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View, useColorScheme } from 'react-native';
-import { ACCOUNT_COLORS } from '@/constants/Colors';
-import { TEXTS } from '@/constants/Languages';
-import { getColors } from '@/constants/Styles';
-import { loadAuthData, saveAuthData } from '@/storage/secureStore';
-import { Account, Folder } from '@/types';
-import { ColorPicker } from '@/components/ui/ColorPicker';
-import { IconPicker } from '@/components/ui/IconPicker';
+import { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, LayoutAnimation, Alert } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { X, Check, ChevronDown, ChevronUp, FolderOpen, Save } from "lucide-react-native";
+
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { getColors } from "@/constants/Styles";
+import { TEXTS } from "@/constants/Languages";
+import { loadAuthData, saveAuthData } from "@/storage/secureStore";
+import { Account, AccountAlgorithm, AccountType, Folder } from "@/types";
+import { IconPicker } from "@/components/ui/IconPicker";
+import { ColorPicker } from "@/components/ui/ColorPicker";
+import { CustomInput } from "@/components/CustomInput";
+import { SelectionGroup } from "@/components/SelectionGroup";
+import { getParam } from "@/utils";
+import { ACCOUNT_COLORS } from "@/constants/Colors";
+
+interface AccountFormState {
+  // Básicos
+  name: string;
+  issuer: string;
+  secret: string;
+  icon: string;
+  color: string;
+
+  // Avanzados
+  type: AccountType;
+  algorithm: AccountAlgorithm;
+  digits: number;
+  period: string;
+  counter: string;
+
+  folderId?: string;
+}
 
 export default function AddAccountScreen() {
   const router = useRouter();
-  const scheme = useColorScheme();
-  const colors = getColors(scheme);
-  
-  const { initialFolderId, scannedSecret, scannedIssuer, scannedName, id, name, issuer, secret, icon, color, folderId } = useLocalSearchParams();
-  
-  const getParam = (p: any) => (Array.isArray(p) ? p[0] : p) || '';
+  const colorScheme = useColorScheme();
+  const colors = getColors(colorScheme);
 
-  const [form, setForm] = useState({
+  const { initialFolderId, scannedSecret, scannedIssuer, scannedName, id, name, issuer, secret, icon, color, folderId } = useLocalSearchParams();
+
+  const [form, setForm] = useState<AccountFormState>({
     name: getParam(name) || getParam(scannedName),
     issuer: getParam(issuer) || getParam(scannedIssuer),
     secret: getParam(secret) || getParam(scannedSecret),
     color: getParam(color) || ACCOUNT_COLORS[0],
     icon: getParam(icon) || 'default',
+    type: "totp",
+    algorithm: "SHA1",
+    digits: 6,
+    period: "30",
+    counter: "0",
     folderId: (getParam(folderId) || (Array.isArray(initialFolderId) ? initialFolderId[0] : initialFolderId)) as string | undefined
   });
 
+  const [focusedInput, setFocusedInput] = useState<string | null>(null);
+
   const [folders, setFolders] = useState<Folder[]>([]);
-  const [showSecret, setShowSecret] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isSecretVisible, setIsSecretVisible] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const isEditing = Boolean(id);
+
+  const updateForm = (key: keyof AccountFormState, value: any) => {
+    setForm(prev => ({ ...prev, [key]: value }));
+  };
+
+  const toggleAdvanced = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setShowAdvanced(!showAdvanced);
+  };
 
   useEffect(() => {
     loadAuthData().then(d => {
@@ -61,6 +100,11 @@ export default function AddAccountScreen() {
             secret: cleanSecret,
             color: form.color,
             icon: form.icon,
+            type: form.type,
+            algorithm: form.algorithm,
+            digits: form.digits,
+            period: form.type === "totp" ? parseInt(form.period) || 30 : undefined,
+            counter: form.type === "hotp" ? parseInt(form.counter) || 0 : undefined,
             folderId: form.folderId,
           };
         }
@@ -77,7 +121,11 @@ export default function AddAccountScreen() {
           name: form.name.trim(),
           issuer: form.issuer.trim(),
           secret: cleanSecret,
-          type: 'totp',
+          type: form.type,
+          algorithm: form.algorithm,
+          digits: form.digits,
+          period: form.type === "totp" ? parseInt(form.period) || 30 : undefined,
+          counter: form.type === "hotp" ? parseInt(form.counter) || 0 : undefined,
           color: form.color,
           icon: form.icon,
           folderId: form.folderId,
@@ -96,42 +144,66 @@ export default function AddAccountScreen() {
     }
   };
 
-  const updateForm = (key: keyof typeof form, val: any) => setForm(prev => ({ ...prev, [key]: val }));
-
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle={useColorScheme() === 'dark' ? 'light-content' : 'dark-content'} />
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style="auto" />
 
-        <View style={styles.header}>
-          <TouchableOpacity onPress={router.back} style={{ padding: 5 }}><ArrowLeft size={24} color={colors.text} /></TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>
-            {isEditing ? TEXTS.editAccount : TEXTS.newAccount}
-          </Text>
-        </View>
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: colors.headerBorder }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+          <X color={colors.text} size={24} />
+        </TouchableOpacity>
+        <Text style={[styles.title, { color: colors.text }]}>
+          {isEditing ? TEXTS.editAccount : TEXTS.newAccount}
+        </Text>
+        <TouchableOpacity onPress={handleSave} style={styles.headerButton}>
+          <Check color={form.color} size={24} />
+        </TouchableOpacity>
+      </View>
 
-        <View style={{ gap: 15 }}>
-          <InputLabel label={TEXTS.accNameLabel} value={form.name} onChange={(t: string) => updateForm('name', t)} placeholder={TEXTS.accNamePlace} colors={colors} maxLength={50} />
-          <InputLabel label={TEXTS.issuerLabel} value={form.issuer} onChange={(t: string) => updateForm('issuer', t)} placeholder={TEXTS.issuerPlace} colors={colors} maxLength={50} />
+      <ScrollView contentContainerStyle={styles.content}>
 
-          <View>
-            <Text style={[styles.label, { color: colors.subtext }]}>{TEXTS.secretLabel}</Text>
-            <View style={[styles.inputBox, { borderColor: colors.headerBorder, backgroundColor: colors.card }]}>
-              <TextInput
-                style={[styles.input, { color: colors.text, flex: 1 }]}
-                value={form.secret}
-                onChangeText={t => updateForm('secret', t.toUpperCase())}
-                secureTextEntry={!showSecret}
-                autoCorrect={false}
-              />
-              <TouchableOpacity onPress={() => setShowSecret(!showSecret)} style={{ padding: 10 }}>
-                {showSecret ? <EyeOff size={20} color={colors.subtext} /> : <Eye size={20} color={colors.subtext} />}
-              </TouchableOpacity>
-            </View>
-          </View>
+        <CustomInput
+          label={TEXTS.accNameLabel}
+          value={form.name}
+          onChangeText={(t: string) => updateForm("name", t)}
+          placeholder={TEXTS.accNamePlace}
+          fieldKey="name"
+          colors={colors}
+          focusedInput={focusedInput}
+          setFocusedInput={setFocusedInput}
+          activeColor={form.color}
+        />
+
+        <CustomInput
+          label={TEXTS.issuerLabel}
+          value={form.issuer}
+          onChangeText={(t: string) => updateForm("issuer", t)}
+          placeholder={TEXTS.issuerPlace}
+          fieldKey="issuer"
+          colors={colors}
+          focusedInput={focusedInput}
+          setFocusedInput={setFocusedInput}
+          activeColor={form.color}
+        />
+
+        <CustomInput
+          label={TEXTS.secretLabel}
+          value={form.secret}
+          onChangeText={(t: string) => updateForm("secret", t.toUpperCase())}
+          placeholder={TEXTS.secretPlace}
+          fieldKey="secret"
+          colors={colors}
+          focusedInput={focusedInput}
+          setFocusedInput={setFocusedInput}
+          activeColor={form.color}
+          isPassword={true}
+          isPasswordVisible={isSecretVisible}
+          onTogglePasswordVisibility={() => setIsSecretVisible(!isSecretVisible)}
+        />
 
           {folders.length > 0 && (
-            <View>
+          <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: colors.subtext }]}>{TEXTS.folder}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
                 <FolderChip label={TEXTS.none} selected={!form.folderId} onPress={() => updateForm('folderId', undefined)} color={form.color} colors={colors} />
@@ -142,37 +214,107 @@ export default function AddAccountScreen() {
             </View>
           )}
 
+        <View style={{ marginBottom: 10 }}>
           <Text style={[styles.label, { color: colors.subtext }]}>{TEXTS.iconLabel}</Text>
-          <IconPicker selectedIcon={form.icon} onSelect={i => updateForm('icon', i)} selectedColor={form.color} colors={colors} />
-
-          <Text style={[styles.label, { color: colors.subtext }]}>{TEXTS.colorLabel}</Text>
-          <ColorPicker selectedColor={form.color} onSelect={c => updateForm('color', c)} colors={colors} />
-
-          <TouchableOpacity style={[styles.saveBtn, { backgroundColor: form.color }]} onPress={handleSave} disabled={loading}>
-            <Save size={20} color="white" />
-            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18 }}>
-              {loading
-                ? TEXTS.saving
-                : (isEditing ? TEXTS.confirmEdit : TEXTS.save)
-              }
-            </Text>
-          </TouchableOpacity>
+          <IconPicker
+            selectedColor={form.color}
+            selectedIcon={form.icon}
+            onSelect={(icon) => updateForm("icon", icon)}
+            colors={colors}
+          />
         </View>
+
+        <View style={{ marginBottom: 10 }}>
+          <Text style={[styles.label, { color: colors.subtext }]}>{TEXTS.colorLabel}</Text>
+          <ColorPicker
+            selectedColor={form.color}
+            onSelect={(color) => updateForm("color", color)}
+            colors={colors}
+          />
+        </View>
+
+
+        {/* Advanced Options Button */}
+        <TouchableOpacity
+          style={[styles.advancedButton, { backgroundColor: colors.modalBg }]}
+          onPress={toggleAdvanced}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.advancedButtonText, { color: colors.text }]}>Opciones Avanzadas</Text>
+          {showAdvanced ? <ChevronUp size={20} color={colors.subtext} /> : <ChevronDown size={20} color={colors.subtext} />}
+        </TouchableOpacity>
+
+        {/* Contenido Avanzado */}
+        {showAdvanced && (
+          <View style={[
+            styles.advancedContainer,
+            {
+              backgroundColor: form.color + "10",
+              borderColor: form.color + "60"
+            }
+          ]}>
+
+            <SelectionGroup label="Tipo de Token" options={["totp", "hotp"]} fieldKey="type" form={form} updateForm={updateForm} colors={colors} />
+            <SelectionGroup label="Algoritmo" options={["SHA1", "SHA256", "SHA512"]} fieldKey="algorithm" form={form} updateForm={updateForm} colors={colors} />
+            <SelectionGroup label="Dígitos" options={[5, 6, 7, 8]} fieldKey="digits" form={form} updateForm={updateForm} colors={colors} />
+
+            <View style={styles.row}>
+              {form.type === "totp" ? (
+                <View style={{ flex: 1 }}>
+                  <CustomInput
+                    label="Periodo (segundos)"
+                    value={form.period}
+                    onChangeText={(t: string) => updateForm("period", t)}
+                    placeholder="30"
+                    fieldKey="period"
+                    keyboardType="numeric"
+                    colors={colors}
+                    focusedInput={focusedInput}
+                    setFocusedInput={setFocusedInput}
+                    activeColor={form.color}
+                  />
+                </View>
+              ) : (
+                <View style={{ flex: 1 }}>
+                  <CustomInput
+                    label="Contador Inicial"
+                    value={form.counter}
+                    onChangeText={(t: string) => updateForm("counter", t)}
+                    placeholder="0"
+                    fieldKey="counter"
+                    keyboardType="numeric"
+                    colors={colors}
+                    focusedInput={focusedInput}
+                    setFocusedInput={setFocusedInput}
+                    activeColor={form.color}
+                  />
+                </View>
+              )}
+            </View>
+
+          </View>
+        )}
+
+        <View style={{ height: 10 }} />
+
+        <TouchableOpacity
+          style={[styles.saveButton, { backgroundColor: form.color }]}
+          onPress={handleSave}
+          activeOpacity={0.8}
+          disabled={loading}
+        >
+          <Save color="white" size={20} style={{ marginRight: 8 }} />
+          <Text style={styles.saveButtonText}>{loading
+            ? TEXTS.saving
+            : (isEditing ? TEXTS.confirmEdit : TEXTS.save)
+          }</Text>
+        </TouchableOpacity>
+
+        <View style={{ height: 10 }} />
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
-
-const InputLabel = ({ label, value, onChange, placeholder, colors, maxLength }: any) => (
-  <View>
-    <Text style={[styles.label, { color: colors.subtext }]}>{label}</Text>
-    <TextInput
-      style={[styles.inputBox, styles.input, { color: colors.text, backgroundColor: colors.card, borderColor: colors.headerBorder }]}
-      value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={colors.subtext}
-      maxLength={maxLength}
-    />
-  </View>
-);
 
 const FolderChip = ({ label, selected, onPress, color, colors, icon }: any) => (
   <TouchableOpacity onPress={onPress} style={[styles.chip, { backgroundColor: selected ? color : colors.card, borderColor: selected ? color : colors.headerBorder }]}>
@@ -183,11 +325,71 @@ const FolderChip = ({ label, selected, onPress, color, colors, icon }: any) => (
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 20, marginTop: 10 },
-  title: { fontSize: 24, fontWeight: 'bold', marginLeft: 15 },
-  label: { fontSize: 14, fontWeight: '600', marginBottom: 6 },
-  inputBox: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
-  input: { padding: 15, fontSize: 16 },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+    paddingTop: 60,
+    borderBottomWidth: 1,
+  },
+  headerButton: { padding: 5 },
+  title: { fontSize: 20, fontWeight: "bold" },
+  content: { padding: 20 },
+  inputGroup: { marginBottom: 20 },
+  label: { fontSize: 13, marginBottom: 8, fontWeight: "600", marginLeft: 2 },
+  input: {
+    borderRadius: 12,
+    padding: 15,
+    fontSize: 16,
+  },
+  eyeIcon: {
+    position: "absolute",
+    right: 15,
+    height: "100%",
+    justifyContent: "center"
+  },
+  advancedButton: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 15,
+    borderRadius: 12,
+  },
+  advancedButtonText: { fontWeight: "600", fontSize: 15 },
+  advancedContainer: {
+    marginTop: 10,
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 2,
+  },
+  selectionRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  selectionBadge: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginBottom: 5,
+  },
+  row: { flexDirection: "row", gap: 15 },
+  saveButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginTop: 10,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3.84,
+  },
+  saveButtonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
   chip: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20, borderWidth: 1 },
-  saveBtn: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', padding: 18, borderRadius: 16, gap: 10, marginTop: 10, elevation: 4 },
 });
