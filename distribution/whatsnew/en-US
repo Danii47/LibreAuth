@@ -1,4 +1,0 @@
-- New! Account Import: You can now import your keys from Aegis (JSON) or text files with links.
-- Folder improvements: You can now search and reorder your accounts within folders, matching the home screen experience.
-- Enhanced security: Biometric verification is requested to confirm if you try to disable app locking.
-- Fixed an issue preventing login on devices without a configured screen lock.
